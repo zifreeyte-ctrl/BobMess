@@ -13,7 +13,9 @@ export class UserService {
 
   updateProfile(userId, data) {
     const username = data.username.trim();
-    const avatar = data.avatar.trim().toUpperCase();
+    const avatar = data.avatar.startsWith("data:image/")
+      ? data.avatar
+      : data.avatar.trim().toUpperCase();
     const status = data.status.trim();
 
     if (username.length < 3) {

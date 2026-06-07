@@ -1,6 +1,6 @@
 import { Modal } from "./Modal.js";
 import { Toast } from "./Toast.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, renderAvatar, readFileAsDataUrl } from "../utils/helpers.js";
 
 export class ProfileModal {
   constructor({ user, userService, onUpdate }) {
@@ -17,7 +17,7 @@ export class ProfileModal {
         <div class="profile-editor">
           <div class="profile-preview">
             <div class="profile-avatar-preview" id="avatarPreview">
-              ${escapeHTML(this.user.avatar)}
+              ${renderAvatar(this.user.avatar)}
             </div>
 
             <div>
@@ -36,12 +36,21 @@ export class ProfileModal {
           </div>
 
           <div class="form-group">
-            <label>Аватар, 1–2 символа</label>
+            <label>Аватар буквами, 1–2 символа</label>
             <input 
               id="profileAvatarInput" 
               type="text" 
               maxlength="2"
-              value="${escapeHTML(this.user.avatar)}" 
+              value="${this.user.avatar?.startsWith("data:image/") ? "" : escapeHTML(this.user.avatar)}" 
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Фото-аватар</label>
+            <input 
+              id="profileAvatarFileInput" 
+              type="file" 
+              accept="image/*"
             />
           </div>
 
@@ -77,7 +86,8 @@ export class ProfileModal {
       `,
       onConfirm: (modalElement) => {
         const username = modalElement.querySelector("#profileUsernameInput").value;
-        const avatar = modalElement.querySelector("#profileAvatarInput").value;
+        const avatarText = modalElement.querySelector("#profileAvatarInput").value;
+        const avatar = selectedAvatarImage || avatarText;
         const status = modalElement.querySelector("#profileStatusInput").value;
 
         try {
@@ -103,6 +113,10 @@ export class ProfileModal {
 
     const usernameInput = modal.element.querySelector("#profileUsernameInput");
     const avatarInput = modal.element.querySelector("#profileAvatarInput");
+    const avatarFileInput = modal.element.querySelector("#profileAvatarFileInput");
+    let selectedAvatarImage = this.user.avatar?.startsWith("data:image/")
+      ? this.user.avatar
+      : null;
     const statusInput = modal.element.querySelector("#profileStatusInput");
 
     const usernamePreview = modal.element.querySelector("#usernamePreview");
@@ -114,7 +128,23 @@ export class ProfileModal {
     });
 
     avatarInput.addEventListener("input", () => {
-      avatarPreview.textContent = avatarInput.value.toUpperCase() || "?";
+  selectedAvatarImage = null;
+  avatarPreview.innerHTML = escapeHTML(avatarInput.value.toUpperCase() || "?");
+});
+
+    avatarFileInput.addEventListener("change", async () => {
+      const file = avatarFileInput.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      try {
+        selectedAvatarImage = await readFileAsDataUrl(file);
+        avatarPreview.innerHTML = `<img src="${selectedAvatarImage}" alt="avatar" />`;
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
     });
 
     statusInput.addEventListener("input", () => {

@@ -1,5 +1,5 @@
 import { Component } from "./Component.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, renderAvatar } from "../utils/helpers.js"; 
 
 export class ServerList extends Component {
   constructor({
@@ -96,7 +96,7 @@ export class ServerList extends Component {
             data-server-id="${server.id}"
             title="${escapeHTML(server.name)}"
           >
-            ${escapeHTML(server.icon)}
+            ${renderAvatar(server.icon, "S")}
             ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ""}
           </button>
         `;

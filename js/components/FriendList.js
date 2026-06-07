@@ -1,5 +1,5 @@
 import { Component } from "./Component.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, renderAvatar } from "../utils/helpers.js";
 
 export class FriendList extends Component {
   constructor({
@@ -101,7 +101,7 @@ export class FriendList extends Component {
         return `
   <div class="friend-row ${isActive}" data-friend-id="${friend.id}">
     <button class="friend-button">
-      <div class="friend-avatar">${escapeHTML(friend.avatar || "?")}</div>
+      <div class="friend-avatar">${renderAvatar(friend.avatar, "?")}</div>
 
       <div class="friend-info">
         <strong>${escapeHTML(friend.username)}</strong>

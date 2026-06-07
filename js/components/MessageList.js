@@ -1,6 +1,6 @@
 import { Component } from "./Component.js";
 import { ContextMenu } from "./ContextMenu.js";
-import { formatTime, escapeHTML } from "../utils/helpers.js";
+import { formatTime, escapeHTML, renderAvatar } from "../utils/helpers.js";
 
 export class MessageList extends Component {
   constructor({
@@ -116,7 +116,7 @@ export class MessageList extends Component {
         data-author-id="${message.authorId}"
       >
         <div class="message-avatar">
-          ${escapeHTML(author?.avatar || "?")}
+          ${renderAvatar(author?.avatar, "?")}
         </div>
 
         <div class="message-body">

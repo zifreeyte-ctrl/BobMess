@@ -7,7 +7,7 @@ import { Toast } from "./Toast.js";
 import { ProfileModal } from "./ProfileModal.js";
 import { FriendList } from "./FriendList.js";
 import { DirectMessageView } from "./DirectMessageView.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js";
 
 
 export class ChatView extends Component {
@@ -272,6 +272,10 @@ const canSendMessages = this.roleService.hasPermission(
   }
 
   afterRender() {
+    setTimeout(() => {
+      this.handleInviteFromUrl();
+    }, 100);
+
     this.serverList?.afterRender();
 
     if (this.mode === "dm") {
@@ -583,18 +587,14 @@ openCreateServerModal() {
   }
 
   handleInviteFromUrl() {
-    const inviteCode = this.inviteLinkService.getInviteCodeFromUrl();
+  const inviteCode = this.inviteLinkService.getInviteCodeFromUrl();
 
-    if (!inviteCode) {
-      return;
-    }
-
-    this.inviteFromUrlHandled = true;
-
-    setTimeout(() => {
-      this.openJoinServerModal(inviteCode);
-    }, 250);
+  if (!inviteCode) {
+    return;
   }
+
+  this.openJoinServerModal(inviteCode);
+}
 
   openCreateInviteModal() {
   const user = this.authService.getCurrentUser();
@@ -733,6 +733,17 @@ openCreateServerModal() {
             </div>
           </div>
 
+          <div class="server-icon-editor">
+            <div class="server-icon-preview" id="serverIconPreview">
+              ${renderAvatar(server.icon, "S")}
+            </div>
+
+            <div class="server-icon-actions">
+              <p class="muted-text">Иконка сервера</p>
+              <input id="serverIconFileInput" type="file" accept="image/*" />
+            </div>
+          </div>
+
           <button class="settings-action" id="renameServerButton">
             Переименовать сервер
           </button>
@@ -752,6 +763,33 @@ openCreateServerModal() {
     });
 
     modal.open();
+
+    const iconFileInput = modal.element.querySelector("#serverIconFileInput");
+    const iconPreview = modal.element.querySelector("#serverIconPreview");
+
+    if (iconFileInput) {
+      iconFileInput.addEventListener("change", async () => {
+        const file = iconFileInput.files[0];
+
+        if (!file) {
+          return;
+        }
+
+        try {
+          const imageData = await readFileAsDataUrl(file);
+          const user = this.authService.getCurrentUser();
+
+          this.serverService.updateServerIcon(this.currentServerId, user.id, imageData);
+
+          iconPreview.innerHTML = `<img src="${imageData}" alt="server icon" />`;
+
+          Toast.show("Иконка сервера обновлена.");
+          this.refresh();
+        } catch (error) {
+          Toast.show(error.message, "error");
+        }
+      });
+    }
 
     modal.element.querySelector("#renameServerButton").addEventListener("click", () => {
       modal.close();

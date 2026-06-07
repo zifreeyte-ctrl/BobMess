@@ -1,6 +1,6 @@
 import { Component } from "./Component.js";
 import { ContextMenu } from "./ContextMenu.js";
-import { formatTime, escapeHTML } from "../utils/helpers.js";
+import { formatTime, escapeHTML, renderAvatar } from "../utils/helpers.js";
 
 export class DirectMessageView extends Component {
   constructor({
@@ -38,7 +38,7 @@ export class DirectMessageView extends Component {
             ${
               this.friend
                 ? `
-                  <div class="friend-avatar">${escapeHTML(this.friend.avatar || "?")}</div>
+                  <div class="friend-avatar">${renderAvatar(this.friend.avatar, "?")}</div>
                   <div>
                     <h1>${escapeHTML(this.friend.username)}</h1>
                     <p>${escapeHTML(this.friend.status || "online")}</p>
@@ -212,7 +212,7 @@ export class DirectMessageView extends Component {
         data-author-id="${message.authorId}"
       >
         <div class="message-avatar">
-          ${escapeHTML(author?.avatar || "?")}
+          ${renderAvatar(author?.avatar, "?")}
         </div>
 
         <div class="message-body dm-message-body">

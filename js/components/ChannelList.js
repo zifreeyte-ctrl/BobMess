@@ -1,5 +1,5 @@
 import { Component } from "./Component.js";
-import { escapeHTML } from "../utils/helpers.js";
+import { escapeHTML, renderAvatar } from "../utils/helpers.js";
 
 export class ChannelList extends Component {
   constructor({
@@ -74,7 +74,7 @@ export class ChannelList extends Component {
         <footer class="user-panel">
             <button class="user-profile-button" id="openProfileButton" title="Открыть профиль">
             <div class="user-avatar">
-                ${escapeHTML(this.currentUser.avatar)}
+                ${renderAvatar(this.currentUser.avatar)}
             </div>
 
             <div class="user-info">

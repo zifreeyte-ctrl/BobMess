@@ -172,6 +172,22 @@ export class ServerService {
     });
   }
 
+  updateServerIcon(serverId, userId, icon) {
+  this.storage.update((database) => {
+    const server = database.servers.find((item) => item.id === serverId);
+
+    if (!server) {
+      throw new Error("Сервер не найден.");
+    }
+
+    if (server.ownerId !== userId) {
+      throw new Error("Только владелец может менять иконку сервера.");
+    }
+
+    server.icon = icon;
+  });
+}
+
   renameServer(serverId, newName, userId) {
     const cleanName = newName.trim();
 
