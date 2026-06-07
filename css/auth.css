@@ -1,0 +1,120 @@
+.auth-page {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(230, 57, 70, 0.3), transparent 30%),
+    var(--color-bg-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 960px;
+  min-height: 560px;
+  background: var(--color-bg-sidebar);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.auth-brand {
+  padding: 56px;
+  background:
+    linear-gradient(135deg, rgba(230, 57, 70, 0.95), rgba(80, 0, 0, 0.9)),
+    var(--color-red);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 28px;
+  background: #fff;
+  color: var(--color-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 52px;
+  font-weight: 900;
+  margin-bottom: 28px;
+}
+
+.auth-brand h1 {
+  font-size: 72px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.auth-brand p {
+  font-size: 20px;
+  max-width: 360px;
+  opacity: 0.9;
+}
+
+.auth-form {
+  padding: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-form h2 {
+  font-size: 34px;
+  margin-bottom: 28px;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  color: var(--color-muted);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text);
+  border-radius: 14px;
+  padding: 15px 16px;
+}
+
+.auth-error {
+  min-height: 22px;
+  color: var(--color-red-light);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.auth-submit {
+  border: none;
+  background: var(--color-red);
+  color: #fff;
+  padding: 15px;
+  border-radius: 14px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  transition: 0.2s;
+}
+
+.auth-submit:hover {
+  background: var(--color-red-light);
+}
+
+.auth-switch {
+  border: none;
+  background: transparent;
+  color: var(--color-red-light);
+}

@@ -1,0 +1,37 @@
+body[data-theme="dark"] {
+  --color-bg-main: #070303;
+  --color-bg-server: #100505;
+  --color-bg-sidebar: #170707;
+  --color-bg-chat: #0e0404;
+  --color-bg-card: #210b0b;
+  --color-bg-input: #2a0f0f;
+
+  --color-red: #ef3340;
+  --color-red-dark: #8f111b;
+  --color-red-light: #ff6872;
+
+  --color-text: #fff7f7;
+  --color-muted: #b99393;
+  --color-border: rgba(255, 104, 114, 0.15);
+
+  --shadow-main: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+
+body[data-theme="light"] {
+  --color-bg-main: #fff7f7;
+  --color-bg-server: #ffe3e3;
+  --color-bg-sidebar: #fff0f0;
+  --color-bg-chat: #fffafa;
+  --color-bg-card: #ffffff;
+  --color-bg-input: #fff4f4;
+
+  --color-red: #d90429;
+  --color-red-dark: #9d0208;
+  --color-red-light: #ef233c;
+
+  --color-text: #241010;
+  --color-muted: #7d5757;
+  --color-border: rgba(217, 4, 41, 0.16);
+
+  --shadow-main: 0 24px 70px rgba(90, 0, 0, 0.12);
+}
