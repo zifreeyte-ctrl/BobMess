@@ -19,6 +19,7 @@ export class ChatView extends Component {
     notificationService,
     searchService,
     roleService,
+    inviteLinkService,
     serverService,
     chatService,
     themeService,
@@ -33,6 +34,8 @@ export class ChatView extends Component {
     this.notificationService = notificationService;
     this.searchService = searchService;
     this.roleService = roleService;
+    this.inviteLinkService = inviteLinkService;
+    this.inviteFromUrlHandled = false;
     this.serverService = serverService;
     this.chatService = chatService;
     this.themeService = themeService;
@@ -286,6 +289,10 @@ const canSendMessages = this.roleService.hasPermission(
         });
       }
 
+      if (!this.inviteFromUrlHandled) {
+      this.handleInviteFromUrl();
+      }
+
       return;
     }
 
@@ -403,6 +410,66 @@ const canSendMessages = this.roleService.hasPermission(
     modal.open();
   }
 
+openCreateServerModal() {
+  const modal = new Modal({
+    title: "Новый сервер",
+    confirmText: "Создать",
+    content: `
+      <div class="form-group">
+        <label>Название нового сервера</label>
+        <input 
+          id="serverNameInput" 
+          type="text" 
+          placeholder="Например: BOB Community" 
+        />
+      </div>
+
+      <div class="modal-splitter">
+        или
+      </div>
+
+      <button class="settings-action" id="joinByInviteButton" type="button">
+        Войти по invite-коду
+      </button>
+    `,
+    onConfirm: (modalElement) => {
+      const input = modalElement.querySelector("#serverNameInput");
+      const serverName = input.value.trim();
+
+      if (!serverName) {
+        input.focus();
+        return;
+      }
+
+      const user = this.authService.getCurrentUser();
+
+      try {
+        const server = this.serverService.createServer(serverName, user.id);
+        const updatedServer = this.serverService.getServerById(server.id);
+
+        this.mode = "server";
+        this.currentServerId = updatedServer.id;
+        this.currentChannelId = updatedServer.channels[0]?.id || null;
+
+        Toast.show("Сервер создан.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    }
+  });
+
+  modal.open();
+
+  modal.element
+    .querySelector("#joinByInviteButton")
+    .addEventListener("click", () => {
+      modal.close();
+      this.openJoinServerModal();
+    });
+}
+
   openRemoveFriendModal(friendId) {
     const friend = this.userService.getUserById(friendId);
 
@@ -515,60 +582,91 @@ const canSendMessages = this.roleService.hasPermission(
     modal.open();
   }
 
-  openCreateServerModal() {
+  handleInviteFromUrl() {
+    const inviteCode = this.inviteLinkService.getInviteCodeFromUrl();
+
+    if (!inviteCode) {
+      return;
+    }
+
+    this.inviteFromUrlHandled = true;
+
+    setTimeout(() => {
+      this.openJoinServerModal(inviteCode);
+    }, 250);
+  }
+
+  openCreateInviteModal() {
+  const user = this.authService.getCurrentUser();
+
+  if (!this.roleService.hasPermission(this.currentServerId, user.id, "createInvites")) {
+    Toast.show("У тебя нет права создавать инвайты.", "error");
+    return;
+  }
+
+  try {
+    const inviteCode = this.serverService.createInvite(
+      this.currentServerId,
+      user.id
+    );
+
+    const inviteLink = this.inviteLinkService.createInviteLink(inviteCode);
+
     const modal = new Modal({
-      title: "Создать сервер",
-      confirmText: "Создать",
+      title: "Invite-ссылка создана",
+      confirmText: "Закрыть",
       content: `
-        <div class="form-group">
-          <label>Название нового сервера</label>
-          <input id="serverNameInput" type="text" placeholder="Например: BOB Community" />
-        </div>
+        <div class="invite-box">
+          <p>Код приглашения:</p>
 
-        <div class="modal-splitter">
-          или
-        </div>
+          <div class="invite-code">
+            ${escapeHTML(inviteCode)}
+          </div>
 
-        <button class="settings-action" id="joinByInviteButton" type="button">
-          Войти по invite-коду
-        </button>
+          <p>Полная invite-ссылка:</p>
+
+          <div class="invite-link-box">
+            <input 
+              id="inviteLinkInput" 
+              type="text" 
+              value="${escapeHTML(inviteLink)}" 
+              readonly 
+            />
+
+            <button id="copyInviteLinkButton" type="button">
+              Копировать
+            </button>
+          </div>
+
+          <p class="muted-text">
+            Друг открывает эту ссылку, входит в аккаунт, и BobMess предложит вступить на сервер.
+          </p>
+        </div>
       `,
-      onConfirm: (modalElement) => {
-        const input = modalElement.querySelector("#serverNameInput");
-        const serverName = input.value.trim();
-
-        if (!serverName) {
-          input.focus();
-          return;
-        }
-
-        const user = this.authService.getCurrentUser();
-
-        try {
-          const server = this.serverService.createServer(serverName, user.id);
-          const updatedServer = this.serverService.getServerById(server.id);
-
-          this.mode = "server";
-          this.currentServerId = updatedServer.id;
-          this.currentChannelId = updatedServer.channels[0].id;
-
-          Toast.show("Сервер создан.");
-          modal.close();
-          this.refresh();
-        } catch (error) {
-          Toast.show(error.message, "error");
-        }
+      onConfirm: () => {
+        modal.close();
       }
     });
 
     modal.open();
+
     modal.element
-    .querySelector("#joinByInviteButton")
-    .addEventListener("click", () => {
-      modal.close();
-      this.openJoinServerModal();
-    });
+      .querySelector("#copyInviteLinkButton")
+      .addEventListener("click", async () => {
+        try {
+          await this.inviteLinkService.copyToClipboard(inviteLink);
+          Toast.show("Invite-ссылка скопирована.");
+        } catch (error) {
+          const input = modal.element.querySelector("#inviteLinkInput");
+          input.select();
+          document.execCommand("copy");
+          Toast.show("Invite-ссылка скопирована.");
+        }
+      });
+  } catch (error) {
+    Toast.show(error.message, "error");
   }
+}
 
   openCreateChannelModal() {
     const user = this.authService.getCurrentUser();
@@ -831,54 +929,20 @@ const canSendMessages = this.roleService.hasPermission(
 
     modal.open();
   }
-  openCreateInviteModal() {
-    const user = this.authService.getCurrentUser();
 
-    if (!this.roleService.hasPermission(this.currentServerId, user.id, "createInvites")) {
-      Toast.show("У тебя нет права создавать инвайты.", "error");
-      return;
-    }
-
-    try {
-      const inviteCode = this.serverService.createInvite(
-        this.currentServerId,
-        user.id
-      );
-
-      const modal = new Modal({
-        title: "Инвайт создан",
-        confirmText: "Закрыть",
-        content: `
-          <div class="invite-box">
-            <p>Передай этот код другу:</p>
-
-            <div class="invite-code">
-              ${escapeHTML(inviteCode)}
-            </div>
-
-            <p class="muted-text">
-              Друг должен нажать + в списке серверов и выбрать вход по инвайту.
-            </p>
-          </div>
-        `,
-        onConfirm: () => {
-          modal.close();
-        }
-      });
-
-      modal.open();
-    } catch (error) {
-      Toast.show(error.message, "error");
-    }
-  }
-  openJoinServerModal() {
+  openJoinServerModal(prefilledCode = "") {
   const modal = new Modal({
     title: "Войти на сервер",
     confirmText: "Войти",
     content: `
       <div class="form-group">
         <label>Invite-код</label>
-        <input id="inviteCodeInput" type="text" placeholder="Например: bob-a1b2c3" />
+        <input 
+          id="inviteCodeInput" 
+          type="text" 
+          placeholder="Например: bob-a1b2c3"
+          value="${escapeHTML(prefilledCode)}"
+        />
       </div>
     `,
     onConfirm: (modalElement) => {
@@ -893,6 +957,8 @@ const canSendMessages = this.roleService.hasPermission(
         this.currentServerId = server.id;
         this.currentChannelId = server.channels[0]?.id || null;
 
+        this.inviteLinkService.clearInviteFromUrl();
+
         Toast.show("Ты вошёл на сервер.");
         modal.close();
         this.refresh();
@@ -904,6 +970,7 @@ const canSendMessages = this.roleService.hasPermission(
 
   modal.open();
 }
+
   openEditMessageModal(messageId) {
     const messages = this.chatService.getMessagesByChannel(this.currentChannelId);
     const message = messages.find((item) => item.id === messageId);

@@ -8,6 +8,7 @@ import { FriendService } from "../services/FriendService.js";
 import { DirectMessageService } from "../services/DirectMessageService.js";
 import { ServerService } from "../services/ServerService.js";
 import { ChatService } from "../services/ChatService.js";
+import { InviteLinkService } from "../services/InviteLinkService.js";
 import { ThemeService } from "../services/ThemeService.js";
 
 import { AuthView } from "../components/AuthView.js";
@@ -29,6 +30,7 @@ export class App {
     this.directMessageService = new DirectMessageService(this.storage);
     this.notificationService = new NotificationService(this.storage);
     this.roleService = new RoleService(this.storage);
+    this.inviteLinkService = new InviteLinkService();
     this.searchService = new SearchService(this.storage);
     this.serverService = new ServerService(this.storage);
     this.chatService = new ChatService(this.storage);
@@ -48,6 +50,7 @@ export class App {
       directMessageService: this.directMessageService,
       notificationService: this.notificationService,
       roleService: this.roleService,
+      inviteLinkService: this.inviteLinkService,
       searchService: this.searchService,
       serverService: this.serverService,
       chatService: this.chatService,

@@ -273,3 +273,29 @@
   margin: 14px 0;
   position: relative;
 }
+.invite-link-box {
+  display: flex;
+  gap: 10px;
+}
+
+.invite-link-box input {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.invite-link-box button {
+  border: none;
+  background: var(--color-red);
+  color: #fff;
+  border-radius: 14px;
+  padding: 0 14px;
+  font-weight: 900;
+}
+
+.invite-link-box button:hover {
+  background: var(--color-red-light);
+}
