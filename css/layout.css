@@ -432,3 +432,28 @@
 .server-icon-preview {
   overflow: hidden;
 }
+.user-avatar img,
+.message-avatar img,
+.friend-avatar img,
+.server-item img,
+.profile-avatar-preview img,
+.server-icon-preview img,
+.member-avatar img,
+.server-member-avatar img,
+.public-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar,
+.message-avatar,
+.friend-avatar,
+.server-item,
+.profile-avatar-preview,
+.server-icon-preview,
+.member-avatar,
+.server-member-avatar,
+.public-profile-avatar {
+  overflow: hidden;
+}

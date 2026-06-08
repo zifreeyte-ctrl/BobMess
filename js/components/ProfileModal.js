@@ -3,8 +3,9 @@ import { Toast } from "./Toast.js";
 import { escapeHTML, renderAvatar, readFileAsDataUrl } from "../utils/helpers.js";
 
 export class ProfileModal {
-  constructor({ user, userService, onUpdate }) {
+  constructor({ user, userService, onUpdate, onOpenDevTools }) {
     this.user = user;
+    this.onOpenDevTools = onOpenDevTools;
     this.userService = userService;
     this.onUpdate = onUpdate;
   }
@@ -66,6 +67,14 @@ export class ProfileModal {
           </div>
 
           <div class="profile-password-box">
+            <h3>Разработка</h3>
+
+            <button class="settings-action" id="openDevToolsButton" type="button">
+              Открыть инструменты разработчика
+            </button>
+          </div>
+
+          <div class="profile-password-box">
             <h3>Смена пароля</h3>
 
             <div class="form-group">
@@ -110,6 +119,18 @@ export class ProfileModal {
     });
 
     modal.open();
+
+    const devToolsButton = modal.element.querySelector("#openDevToolsButton");
+
+    if (devToolsButton) {
+      devToolsButton.addEventListener("click", () => {
+        modal.close();
+
+        if (this.onOpenDevTools) {
+          this.onOpenDevTools();
+        }
+      });
+    }
 
     const usernameInput = modal.element.querySelector("#profileUsernameInput");
     const avatarInput = modal.element.querySelector("#profileAvatarInput");

@@ -10,10 +10,12 @@ import { DirectMessageView } from "./DirectMessageView.js";
 import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js";
 import { ServerMembersPanel } from "./ServerMembersPanel.js";
 import { PublicProfileModal } from "./PublicProfileModal.js";
+import { DevToolsModal } from "./DevToolsModal.js";
 
 
 export class ChatView extends Component {
   constructor({
+    storage,
     authService,
     userService,
     friendService,
@@ -30,6 +32,7 @@ export class ChatView extends Component {
     super();
 
     this.authService = authService;
+    this.storage = storage;
     this.userService = userService;
     this.friendService = friendService;
     this.directMessageService = directMessageService;
@@ -500,6 +503,17 @@ openCreateServerModal() {
       modal.close();
       this.openJoinServerModal();
     });
+  }
+
+  openDevToolsModal() {
+  const modal = new DevToolsModal({
+    storage: this.storage,
+    onReset: () => {
+      this.logout();
+    }
+  });
+
+  modal.open();
 }
 
   openRemoveFriendModal(friendId) {
@@ -1327,6 +1341,9 @@ clearDirectMessageSearch() {
       userService: this.userService,
       onUpdate: () => {
         this.refresh();
+      },
+      onOpenDevTools: () => {
+        this.openDevToolsModal();
       }
     });
 

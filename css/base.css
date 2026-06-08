@@ -46,3 +46,7 @@ select {
   background: var(--color-red);
   color: #fff;
 }
+img {
+  max-width: 100%;
+  display: block;
+}

@@ -715,3 +715,24 @@
   height: 100% !important;
   object-fit: cover !important;
 }
+.devtools-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.devtools-textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  outline: none;
+}
+
+.devtools-textarea:focus {
+  border-color: var(--color-red-light);
+}
