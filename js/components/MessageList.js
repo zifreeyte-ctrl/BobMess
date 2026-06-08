@@ -9,7 +9,8 @@ export class MessageList extends Component {
     authService,
     currentUser,
     onDeleteMessage,
-    onEditMessage
+    onEditMessage,
+    onOpenUserProfile
   }) {
     super();
 
@@ -19,6 +20,7 @@ export class MessageList extends Component {
     this.currentUser = currentUser;
     this.onDeleteMessage = onDeleteMessage;
     this.onEditMessage = onEditMessage;
+    this.onOpenUserProfile = onOpenUserProfile;
   }
 
   render() {
@@ -32,6 +34,20 @@ export class MessageList extends Component {
   }
 
   afterRender() {
+    this.element.querySelectorAll("[data-open-user-profile]").forEach((element) => {
+      element.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        const userId = element.dataset.openUserProfile;
+
+        if (!userId || !this.onOpenUserProfile) {
+          return;
+        }
+
+        this.onOpenUserProfile(userId);
+      });
+    });
+
     this.element.querySelectorAll("[data-message-id]").forEach((messageElement) => {
       messageElement.addEventListener("contextmenu", (event) => {
         event.preventDefault();
@@ -115,13 +131,24 @@ export class MessageList extends Component {
         data-message-id="${message.id}"
         data-author-id="${message.authorId}"
       >
-        <div class="message-avatar">
+        <button 
+          class="message-avatar profile-clickable"
+          data-open-user-profile="${author?.id || ""}"
+          title="Открыть профиль"
+        >
           ${renderAvatar(author?.avatar, "?")}
-        </div>
+        </button>
 
         <div class="message-body">
           <div class="message-meta">
-            <strong>${escapeHTML(author?.username || "Unknown")}</strong>
+            <button 
+              class="message-author-button"
+              data-open-user-profile="${author?.id || ""}"
+              title="Открыть профиль"
+            >
+              ${escapeHTML(author?.username || "Unknown")}
+            </button>
+
             <span>${formatTime(message.createdAt)}</span>
             ${message.editedAt ? `<span class="edited-label">изменено</span>` : ""}
           </div>

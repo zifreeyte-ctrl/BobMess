@@ -9,6 +9,7 @@ import { FriendList } from "./FriendList.js";
 import { DirectMessageView } from "./DirectMessageView.js";
 import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js";
 import { ServerMembersPanel } from "./ServerMembersPanel.js";
+import { PublicProfileModal } from "./PublicProfileModal.js";
 
 
 export class ChatView extends Component {
@@ -112,16 +113,17 @@ export class ChatView extends Component {
     }
 
     this.directMessageView = new DirectMessageView({
-        currentUser,
-        friend: currentFriend,
-        messages: dmMessages,
-        searchResults: this.dmSearchResults,
-        userService: this.userService,
-        onSendMessage: (text) => this.sendDirectMessage(text),
-        onSearch: (query) => this.searchDirectMessages(query),
-        onClearSearch: () => this.clearDirectMessageSearch(),
-        onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
-        onDeleteMessage: (messageId) => this.openDeleteDirectMessageModal(messageId)
+      currentUser,
+      friend: currentFriend,
+      messages: dmMessages,
+      searchResults: this.dmSearchResults,
+      userService: this.userService,
+      onSendMessage: (text) => this.sendDirectMessage(text),
+      onSearch: (query) => this.searchDirectMessages(query),
+      onClearSearch: () => this.clearDirectMessageSearch(),
+      onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
+      onDeleteMessage: (messageId) => this.openDeleteDirectMessageModal(messageId),
+      onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
     });
 
     this.element = this.createElement(`
@@ -213,12 +215,13 @@ const canSendMessages = this.roleService.hasPermission(
     }
 
     this.messageListComponent = new MessageList({
-        messages,
-        searchResults: this.channelSearchResults,
-        authService: this.authService,
-        currentUser,
-        onDeleteMessage: (messageId) => this.deleteMessage(messageId),
-        onEditMessage: (messageId) => this.openEditMessageModal(messageId)
+      messages,
+      searchResults: this.channelSearchResults,
+      authService: this.authService,
+      currentUser,
+      onDeleteMessage: (messageId) => this.deleteMessage(messageId),
+      onEditMessage: (messageId) => this.openEditMessageModal(messageId),
+      onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
     });
 
     this.element = this.createElement(`
@@ -716,6 +719,21 @@ openCreateServerModal() {
 
     modal.open();
   }
+
+  openUserProfileModal(userId) {
+  const user = this.userService.getUserById(userId);
+
+  if (!user) {
+    Toast.show("Пользователь не найден.", "error");
+    return;
+  }
+
+  const profileModal = new PublicProfileModal({
+    user
+  });
+
+  profileModal.open();
+}
 
   openServerSettingsModal() {
   const server = this.serverService.getServerById(this.currentServerId);

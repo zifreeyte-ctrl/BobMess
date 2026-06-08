@@ -12,6 +12,7 @@ export class DirectMessageView extends Component {
     onSendMessage,
     onSearch,
     onClearSearch,
+    onOpenUserProfile,
     onEditMessage,
     onDeleteMessage
   }) {
@@ -28,6 +29,7 @@ export class DirectMessageView extends Component {
     this.onClearSearch = onClearSearch;
     this.onEditMessage = onEditMessage;
     this.onDeleteMessage = onDeleteMessage;
+    this.onOpenUserProfile = onOpenUserProfile;
   }
 
   render() {
@@ -38,7 +40,12 @@ export class DirectMessageView extends Component {
             ${
               this.friend
                 ? `
-                  <div class="friend-avatar">${renderAvatar(this.friend.avatar, "?")}</div>
+                  <button 
+                    class="friend-avatar profile-clickable"
+                    data-open-user-profile="${this.friend.id}"
+                  >
+                    ${renderAvatar(this.friend.avatar, "?")}
+                  </button>
                   <div>
                     <h1>${escapeHTML(this.friend.username)}</h1>
                     <p>${escapeHTML(this.friend.status || "online")}</p>
@@ -113,6 +120,12 @@ export class DirectMessageView extends Component {
 
     this.element.querySelector("#dmClearSearchButton").addEventListener("click", () => {
       this.onClearSearch();
+    });
+
+    this.element.querySelectorAll("[data-open-user-profile]").forEach((element) => {
+      element.addEventListener("click", () => {
+        this.onOpenUserProfile(element.dataset.openUserProfile);
+      });
     });
 
     this.element.querySelectorAll("[data-dm-id]").forEach((messageElement) => {
@@ -211,13 +224,21 @@ export class DirectMessageView extends Component {
         data-dm-id="${message.id}"
         data-author-id="${message.authorId}"
       >
-        <div class="message-avatar">
+        <button 
+          class="message-avatar profile-clickable"
+          data-open-user-profile="${author?.id || ""}"
+        >
           ${renderAvatar(author?.avatar, "?")}
-        </div>
+        </button>
 
         <div class="message-body dm-message-body">
           <div class="message-meta">
-            <strong>${escapeHTML(author?.username || "Unknown")}</strong>
+            <button 
+              class="message-author-button"
+              data-open-user-profile="${author?.id || ""}"
+            >
+              ${escapeHTML(author?.username || "Unknown")}
+            </button>
             <span>${formatTime(message.createdAt)}</span>
             ${message.editedAt ? `<span class="edited-label">изменено</span>` : ""}
           </div>

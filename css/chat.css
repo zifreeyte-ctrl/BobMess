@@ -323,3 +323,30 @@
     max-width: min(460px, 70vw);
   }
 }
+.profile-clickable {
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.profile-clickable:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+}
+
+.message-author-button {
+  border: none;
+  background: transparent;
+  color: var(--color-red-light);
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+}
+
+.message-author-button:hover {
+  text-decoration: underline;
+}
+.message-avatar.profile-clickable,
+.friend-avatar.profile-clickable {
+  padding: 0;
+}
