@@ -157,7 +157,7 @@ export class ChannelList extends Component {
       data-channel-id="${channel.id}"
     >
       <span>
-        <span class="channel-hash">#</span>
+        <span class="channel-hash">${channel.isPrivate ? "🔒" : "#"}</span>
         ${escapeHTML(channel.name)}
       </span>
 

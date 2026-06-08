@@ -144,6 +144,39 @@ export class RoleService {
     return false;
   }
 
+  canViewChannel(serverId, channel, userId) {
+  const server = this.getServer(serverId);
+
+  if (!server || !channel) {
+    return false;
+  }
+
+  if (!server.members?.includes(userId) && server.ownerId !== userId) {
+    return false;
+  }
+
+  if (!channel.isPrivate) {
+    return true;
+  }
+
+  if (server.ownerId === userId) {
+    return true;
+  }
+
+  if (channel.ownerId === userId) {
+    return true;
+  }
+
+  if (channel.allowedMembers?.includes(userId)) {
+    return true;
+  }
+
+  const userRoles = this.getUserRoles(serverId, userId);
+  const userRoleIds = userRoles.map((role) => role.id);
+
+  return channel.allowedRoles?.some((roleId) => userRoleIds.includes(roleId));
+}
+
   assignRole(serverId, targetUserId, roleId, actorUserId) {
     if (!this.hasPermission(serverId, actorUserId, "manageRoles")) {
       throw new Error("У тебя нет права выдавать роли.");

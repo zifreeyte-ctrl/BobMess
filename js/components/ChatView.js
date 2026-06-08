@@ -170,6 +170,30 @@ export class ChatView extends Component {
     this.currentChannelId =
       this.currentChannelId || currentServer.channels[0]?.id || null;
 
+      const visibleChannels = currentServer.channels.filter((channel) => {
+        return this.roleService.canViewChannel(
+          currentServer.id,
+          channel,
+          currentUser.id
+        );
+      });
+
+      if (
+        this.currentChannelId &&
+        !visibleChannels.some((channel) => channel.id === this.currentChannelId)
+      ) {
+        this.currentChannelId = visibleChannels[0]?.id || null;
+      }
+
+      if (!this.currentChannelId && visibleChannels.length > 0) {
+        this.currentChannelId = visibleChannels[0].id;
+      }
+
+      const serverForView = {
+        ...currentServer,
+        channels: visibleChannels
+      };
+
     const currentChannel = this.getCurrentChannel();
 
     const canManageServer = this.roleService.hasPermission(
@@ -191,7 +215,7 @@ const canSendMessages = this.roleService.hasPermission(
 );
 
     this.channelList = new ChannelList({
-      server: currentServer,
+      server: serverForView,
       currentChannelId: this.currentChannelId,
       currentUser,
       notificationService: this.notificationService,
@@ -673,52 +697,68 @@ openCreateServerModal() {
 }
 
   openCreateChannelModal() {
-    const user = this.authService.getCurrentUser();
+  const user = this.authService.getCurrentUser();
 
-    if (!this.roleService.hasPermission(this.currentServerId, user.id, "createChannels")) {
-      Toast.show("У тебя нет права создавать каналы.", "error");
-      return;
-    }
-    const modal = new Modal({
-      title: "Создать канал",
-      confirmText: "Создать",
-      content: `
-        <div class="form-group">
-          <label>Название канала</label>
-          <input id="channelNameInput" type="text" placeholder="Например: memes" />
-        </div>
-      `,
-      onConfirm: (modalElement) => {
-        const input = modalElement.querySelector("#channelNameInput");
-        const channelName = input.value.trim();
-
-        if (!channelName) {
-          input.focus();
-          return;
-        }
-
-        try {
-          const user = this.authService.getCurrentUser();
-
-          const channel = this.serverService.createChannel(
-            this.currentServerId,
-            channelName,
-            user.id
-          );
-
-          this.currentChannelId = channel.id;
-
-          Toast.show("Канал создан.");
-          modal.close();
-          this.refresh();
-        } catch (error) {
-          Toast.show(error.message, "error");
-        }
-      }
-    });
-
-    modal.open();
+  if (!this.roleService.hasPermission(this.currentServerId, user.id, "createChannels")) {
+    Toast.show("У тебя нет права создавать каналы.", "error");
+    return;
   }
+
+  const modal = new Modal({
+    title: "Создать канал",
+    confirmText: "Создать",
+    content: `
+      <div class="form-group">
+        <label>Название канала</label>
+        <input id="channelNameInput" type="text" placeholder="Например: private-chat" />
+      </div>
+
+      <label class="checkbox-row">
+        <input id="channelPrivateInput" type="checkbox" />
+        <span>Сделать канал приватным</span>
+      </label>
+
+      <p class="muted-text">
+        Приватный канал будет виден только тебе, владельцу сервера и тем, кому позже дадут доступ.
+      </p>
+    `,
+    onConfirm: (modalElement) => {
+      const input = modalElement.querySelector("#channelNameInput");
+      const privateInput = modalElement.querySelector("#channelPrivateInput");
+
+      const channelName = input.value.trim();
+      const isPrivate = privateInput.checked;
+
+      if (!channelName) {
+        input.focus();
+        return;
+      }
+
+      try {
+        const channel = this.serverService.createChannel(
+          this.currentServerId,
+          channelName,
+          user.id,
+          {
+            isPrivate,
+            allowedMembers: [],
+            allowedRoles: []
+          }
+        );
+
+        this.currentChannelId = channel.id;
+
+        Toast.show(isPrivate ? "Приватный канал создан." : "Канал создан.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    }
+  });
+
+  modal.open();
+}
 
   openUserProfileModal(userId) {
   const user = this.userService.getUserById(userId);
@@ -956,43 +996,137 @@ openCreateServerModal() {
   }
 
   openRenameChannelModal(channelId) {
-    const user = this.authService.getCurrentUser();
-    const server = this.serverService.getServerById(this.currentServerId);
-    const channel = server?.channels.find((item) => item.id === channelId);
+  const user = this.authService.getCurrentUser();
+  const server = this.serverService.getServerById(this.currentServerId);
+  const channel = server?.channels.find((item) => item.id === channelId);
 
-    if (!this.roleService.canManageChannel(this.currentServerId, channel, user.id)) {
-      Toast.show("Ты можешь менять только свои каналы.", "error");
-      return;
-    }
-
-    if (!channel) return;
-
-    const modal = new Modal({
-      title: "Переименовать канал",
-      confirmText: "Сохранить",
-      content: `
-        <div class="form-group">
-          <label>Новое название канала</label>
-          <input id="channelRenameInput" type="text" value="${escapeHTML(channel.name)}" />
-        </div>
-      `,
-      onConfirm: (modalElement) => {
-        const input = modalElement.querySelector("#channelRenameInput");
-        const newName = input.value.trim();
-
-        try {
-          this.serverService.renameChannel(this.currentServerId, channelId, newName);
-          Toast.show("Канал переименован.");
-          modal.close();
-          this.refresh();
-        } catch (error) {
-          Toast.show(error.message, "error");
-        }
-      }
-    });
-
-    modal.open();
+  if (!channel) {
+    return;
   }
+
+  if (!this.roleService.canManageChannel(this.currentServerId, channel, user.id)) {
+    Toast.show("Ты можешь менять только свои каналы.", "error");
+    return;
+  }
+
+  const members = this.userService
+    .getUsers()
+    .filter((item) => server.members?.includes(item.id));
+
+  const roles = this.roleService.getAssignableRoles(this.currentServerId);
+
+  const modal = new Modal({
+    title: "Настройки канала",
+    confirmText: "Сохранить",
+    content: `
+      <div class="form-group">
+        <label>Название канала</label>
+        <input 
+          id="channelRenameInput" 
+          type="text" 
+          value="${escapeHTML(channel.name)}" 
+        />
+      </div>
+
+      <label class="checkbox-row">
+        <input 
+          id="channelPrivateInput" 
+          type="checkbox" 
+          ${channel.isPrivate ? "checked" : ""}
+        />
+        <span>Приватный канал</span>
+      </label>
+
+      <div class="channel-access-box">
+        <h3>Доступ по участникам</h3>
+
+        <div class="access-list">
+          ${members
+            .filter((member) => member.id !== channel.ownerId)
+            .map((member) => {
+              const checked = channel.allowedMembers?.includes(member.id)
+                ? "checked"
+                : "";
+
+              return `
+                <label class="access-row">
+                  <input 
+                    type="checkbox" 
+                    data-access-member="${member.id}" 
+                    ${checked}
+                  />
+
+                  <span>${renderAvatar(member.avatar, "?")}</span>
+                  <strong>${escapeHTML(member.username)}</strong>
+                </label>
+              `;
+            })
+            .join("")}
+        </div>
+      </div>
+
+      <div class="channel-access-box">
+        <h3>Доступ по ролям</h3>
+
+        <div class="access-list">
+          ${roles
+            .map((role) => {
+              const checked = channel.allowedRoles?.includes(role.id)
+                ? "checked"
+                : "";
+
+              return `
+                <label class="access-row">
+                  <input 
+                    type="checkbox" 
+                    data-access-role="${role.id}" 
+                    ${checked}
+                  />
+
+                  <span class="role-color-dot" style="background:${escapeHTML(role.color)}"></span>
+                  <strong>${escapeHTML(role.name)}</strong>
+                </label>
+              `;
+            })
+            .join("")}
+        </div>
+      </div>
+    `,
+    onConfirm: (modalElement) => {
+      const nameInput = modalElement.querySelector("#channelRenameInput");
+      const privateInput = modalElement.querySelector("#channelPrivateInput");
+
+      const allowedMembers = Array.from(
+        modalElement.querySelectorAll("[data-access-member]:checked")
+      ).map((input) => input.dataset.accessMember);
+
+      const allowedRoles = Array.from(
+        modalElement.querySelectorAll("[data-access-role]:checked")
+      ).map((input) => input.dataset.accessRole);
+
+      try {
+        this.serverService.updateChannelSettings(
+          this.currentServerId,
+          channelId,
+          {
+            name: nameInput.value.trim(),
+            isPrivate: privateInput.checked,
+            allowedMembers,
+            allowedRoles
+          }
+        );
+
+        Toast.show("Настройки канала сохранены.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    }
+  });
+
+  modal.open();
+}
 
   openDeleteChannelModal(channelId) {
     const user = this.authService.getCurrentUser();
@@ -1205,12 +1339,29 @@ clearDirectMessageSearch() {
   }
 
   getCurrentChannel() {
-    const server = this.serverService.getServerById(this.currentServerId);
+  const server = this.serverService.getServerById(this.currentServerId);
+  const user = this.authService.getCurrentUser();
 
-    if (!server) return null;
-
-    return server.channels.find((channel) => channel.id === this.currentChannelId) || null;
+  if (!server || !user) {
+    return null;
   }
+
+  const channel = server.channels.find(
+    (item) => item.id === this.currentChannelId
+  );
+
+  if (!channel) {
+    return null;
+  }
+
+  const canView = this.roleService.canViewChannel(
+    server.id,
+    channel,
+    user.id
+  );
+
+  return canView ? channel : null;
+}
 
   refresh() {
     const oldElement = this.element;

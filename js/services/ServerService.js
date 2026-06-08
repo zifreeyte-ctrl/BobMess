@@ -89,7 +89,7 @@ export class ServerService {
     return server;
   }
 
-  createChannel(serverId, name, ownerId) {
+  createChannel(serverId, name, ownerId, options = {}) {
     const cleanName = this.normalizeChannelName(name);
 
     if (cleanName.length < 2) {
@@ -102,6 +102,9 @@ export class ServerService {
       name: cleanName,
       type: "text",
       ownerId,
+      isPrivate: Boolean(options.isPrivate),
+      allowedMembers: options.allowedMembers || [],
+      allowedRoles: options.allowedRoles || [],
       createdAt: getCurrentDate()
     });
 
@@ -125,6 +128,43 @@ export class ServerService {
 
     return channel;
   }
+
+  updateChannelSettings(serverId, channelId, data) {
+  const cleanName = this.normalizeChannelName(data.name);
+
+  if (cleanName.length < 2) {
+    throw new Error("Название канала должно быть минимум 2 символа.");
+  }
+
+  this.storage.update((database) => {
+    const server = database.servers.find((item) => item.id === serverId);
+
+    if (!server) {
+      throw new Error("Сервер не найден.");
+    }
+
+    const channel = server.channels.find((item) => item.id === channelId);
+
+    if (!channel) {
+      throw new Error("Канал не найден.");
+    }
+
+    const exists = server.channels.some(
+      (item) =>
+        item.id !== channelId &&
+        item.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (exists) {
+      throw new Error("Канал с таким названием уже существует.");
+    }
+
+    channel.name = cleanName;
+    channel.isPrivate = Boolean(data.isPrivate);
+    channel.allowedMembers = data.allowedMembers || [];
+    channel.allowedRoles = data.allowedRoles || [];
+  });
+}
 
   renameChannel(serverId, channelId, newName) {
     const cleanName = this.normalizeChannelName(newName);

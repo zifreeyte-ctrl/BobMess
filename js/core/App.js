@@ -102,6 +102,25 @@ export class App {
             dialogs: {}
         };
         database.servers.forEach((server) => {
+
+          server.channels.forEach((channel) => {
+            if (!channel.ownerId) {
+              channel.ownerId = server.ownerId;
+            }
+
+            if (typeof channel.isPrivate !== "boolean") {
+              channel.isPrivate = false;
+            }
+
+            if (!Array.isArray(channel.allowedMembers)) {
+              channel.allowedMembers = [];
+            }
+
+            if (!Array.isArray(channel.allowedRoles)) {
+              channel.allowedRoles = [];
+            }
+          });
+          
         if (!server.roles) {
         server.roles = [];
         }
