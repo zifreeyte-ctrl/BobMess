@@ -8,6 +8,7 @@ import { ProfileModal } from "./ProfileModal.js";
 import { FriendList } from "./FriendList.js";
 import { DirectMessageView } from "./DirectMessageView.js";
 import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js";
+import { ServerMembersPanel } from "./ServerMembersPanel.js";
 
 
 export class ChatView extends Component {
@@ -717,102 +718,152 @@ openCreateServerModal() {
   }
 
   openServerSettingsModal() {
-    const server = this.serverService.getServerById(this.currentServerId);
+  const server = this.serverService.getServerById(this.currentServerId);
+  const currentUser = this.authService.getCurrentUser();
+  const users = this.userService.getUsers();
 
-    if (!server) return;
+  if (!server) {
+    return;
+  }
 
-    const modal = new Modal({
-      title: "Настройки сервера",
-      confirmText: "Закрыть",
-      content: `
-        <div class="settings-box">
-          <div class="settings-row">
-            <div>
-              <strong>${escapeHTML(server.name)}</strong>
-              <p class="muted-text">Управление сервером BOB</p>
-            </div>
-          </div>
+  const membersPanel = new ServerMembersPanel({
+    server,
+    users,
+    currentUser,
+    roleService: this.roleService,
+    onAssignRole: (userId, roleId) => {
+      try {
+        this.roleService.assignRole(
+          this.currentServerId,
+          userId,
+          roleId,
+          currentUser.id
+        );
 
-          <div class="server-icon-editor">
-            <div class="server-icon-preview" id="serverIconPreview">
-              ${renderAvatar(server.icon, "S")}
-            </div>
-
-            <div class="server-icon-actions">
-              <p class="muted-text">Иконка сервера</p>
-              <input id="serverIconFileInput" type="file" accept="image/*" />
-            </div>
-          </div>
-
-          <button class="settings-action" id="renameServerButton">
-            Переименовать сервер
-          </button>
-
-          <button class="settings-action" id="createInviteButton">
-            Создать invite
-          </button>
-
-          <button class="settings-action danger" id="deleteServerButton">
-            Удалить сервер
-          </button>
-        </div>
-      `,
-      onConfirm: () => {
+        Toast.show("Роль выдана.");
         modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    },
+    onRemoveRole: (userId, roleId) => {
+      try {
+        this.roleService.removeRole(
+          this.currentServerId,
+          userId,
+          roleId,
+          currentUser.id
+        );
+
+        Toast.show("Роль снята.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    }
+  });
+
+  const modal = new Modal({
+    title: "Настройки сервера",
+    confirmText: "Закрыть",
+    content: `
+      <div class="settings-box">
+        <div class="settings-row">
+          <div>
+            <strong>${escapeHTML(server.name)}</strong>
+            <p class="muted-text">Управление сервером BOB</p>
+          </div>
+        </div>
+
+        <div class="server-icon-editor">
+          <div class="server-icon-preview" id="serverIconPreview">
+            ${renderAvatar(server.icon, "S")}
+          </div>
+
+          <div class="server-icon-actions">
+            <p class="muted-text">Иконка сервера</p>
+            <input id="serverIconFileInput" type="file" accept="image/*" />
+          </div>
+        </div>
+
+        <button class="settings-action" id="renameServerButton">
+          Переименовать сервер
+        </button>
+
+        <button class="settings-action" id="createInviteButton">
+          Создать invite-ссылку
+        </button>
+
+        ${membersPanel.render()}
+
+        <button class="settings-action danger" id="deleteServerButton">
+          Удалить сервер
+        </button>
+      </div>
+    `,
+    onConfirm: () => {
+      modal.close();
+    }
+  });
+
+  modal.open();
+
+  membersPanel.bindEvents(modal.element);
+
+  const iconFileInput = modal.element.querySelector("#serverIconFileInput");
+  const iconPreview = modal.element.querySelector("#serverIconPreview");
+
+  if (iconFileInput) {
+    iconFileInput.addEventListener("change", async () => {
+      const file = iconFileInput.files[0];
+
+      if (!file) {
+        return;
+      }
+
+      try {
+        const imageData = await readFileAsDataUrl(file);
+        const user = this.authService.getCurrentUser();
+
+        this.serverService.updateServerIcon(
+          this.currentServerId,
+          user.id,
+          imageData
+        );
+
+        iconPreview.innerHTML = `<img src="${imageData}" alt="server icon" />`;
+
+        Toast.show("Иконка сервера обновлена.");
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
       }
     });
+  }
 
-    modal.open();
-
-    const iconFileInput = modal.element.querySelector("#serverIconFileInput");
-    const iconPreview = modal.element.querySelector("#serverIconPreview");
-
-    if (iconFileInput) {
-      iconFileInput.addEventListener("change", async () => {
-        const file = iconFileInput.files[0];
-
-        if (!file) {
-          return;
-        }
-
-        try {
-          const imageData = await readFileAsDataUrl(file);
-          const user = this.authService.getCurrentUser();
-
-          this.serverService.updateServerIcon(this.currentServerId, user.id, imageData);
-
-          iconPreview.innerHTML = `<img src="${imageData}" alt="server icon" />`;
-
-          Toast.show("Иконка сервера обновлена.");
-          this.refresh();
-        } catch (error) {
-          Toast.show(error.message, "error");
-        }
-      });
-    }
-
-    modal.element.querySelector("#renameServerButton").addEventListener("click", () => {
+  modal.element
+    .querySelector("#renameServerButton")
+    .addEventListener("click", () => {
       modal.close();
       this.openRenameServerModal();
     });
 
-    modal.element
+  modal.element
     .querySelector("#createInviteButton")
     .addEventListener("click", () => {
       modal.close();
       this.openCreateInviteModal();
     });
 
-    modal.element.querySelector("#serverAdminButton").addEventListener("click", () => {
-      modal.close();
-      this.openServerAdminModal();
-    });
-
-    modal.element.querySelector("#deleteServerButton").addEventListener("click", () => {
+  modal.element
+    .querySelector("#deleteServerButton")
+    .addEventListener("click", () => {
       modal.close();
       this.openDeleteServerModal();
     });
-  }
+}
 
   openRenameServerModal() {
     const server = this.serverService.getServerById(this.currentServerId);

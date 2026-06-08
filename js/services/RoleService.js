@@ -180,6 +180,44 @@ export class RoleService {
     });
   }
 
+  removeRole(serverId, targetUserId, roleId, actorUserId) {
+  if (!this.hasPermission(serverId, actorUserId, "manageRoles")) {
+    throw new Error("У тебя нет права снимать роли.");
+  }
+
+  this.storage.update((database) => {
+    const server = database.servers.find((item) => item.id === serverId);
+
+    if (!server) {
+      throw new Error("Сервер не найден.");
+    }
+
+    if (server.ownerId === targetUserId) {
+      throw new Error("Нельзя менять роли владельца сервера.");
+    }
+
+    if (!server.memberRoles[targetUserId]) {
+      return;
+    }
+
+    server.memberRoles[targetUserId] = server.memberRoles[targetUserId].filter(
+      (id) => id !== roleId
+    );
+  });
+}
+
+getAssignableRoles(serverId) {
+  const server = this.getServer(serverId);
+
+  if (!server) {
+    return [];
+  }
+
+  this.ensureServerRoles(server);
+
+  return server.roles.filter((role) => role.name !== "Owner");
+}
+
   getRoleLabel(serverId, userId) {
     const server = this.getServer(serverId);
 

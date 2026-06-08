@@ -22,8 +22,8 @@ export class UserService {
       throw new Error("Имя пользователя должно быть минимум 3 символа.");
     }
 
-    if (avatar.length < 1 || avatar.length > 2) {
-      throw new Error("Аватар должен быть 1 или 2 символа.");
+    if (!avatar.startsWith("data:image/") && (avatar.length < 1 || avatar.length > 2)) {
+      throw new Error("Аватар должен быть 1 или 2 символа, либо фото.");
     }
 
     if (status.length > 32) {

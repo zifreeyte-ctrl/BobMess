@@ -327,3 +327,91 @@
   display: grid;
   gap: 8px;
 }
+.server-members-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.server-member-list {
+  display: grid;
+  gap: 12px;
+}
+
+.server-member-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.server-member-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.server-member-main strong {
+  display: block;
+}
+
+.server-member-main p {
+  color: #4ade80;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.server-member-role {
+  color: var(--color-red-light);
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.server-member-role-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-pill {
+  border: none;
+  background: var(--color-red-dark);
+  color: #fff;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.role-pill:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.server-member-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.server-member-actions select {
+  flex: 1;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-input);
+  color: var(--color-text);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.server-member-actions button {
+  border: none;
+  background: var(--color-red);
+  color: #fff;
+  border-radius: 12px;
+  padding: 0 14px;
+  font-weight: 900;
+}
+
+.server-member-actions button:hover {
+  background: var(--color-red-light);
+}
