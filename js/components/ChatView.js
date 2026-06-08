@@ -11,6 +11,7 @@ import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js
 import { ServerMembersPanel } from "./ServerMembersPanel.js";
 import { PublicProfileModal } from "./PublicProfileModal.js";
 import { DevToolsModal } from "./DevToolsModal.js";
+import { ServerMembersSidebar } from "./ServerMembersSidebar.js";
 
 
 export class ChatView extends Component {
@@ -53,6 +54,8 @@ export class ChatView extends Component {
     this.dmSearchResults = null;
 
     this.mode = "server";
+    this.isMembersSidebarOpen = true;
+    this.membersSidebar = null;
 
     this.serverList = null;
     this.channelList = null;
@@ -251,12 +254,20 @@ const canSendMessages = this.roleService.hasPermission(
       onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
     });
 
-    this.element = this.createElement(`
-      <main class="bob-layout">
-        <div id="serverListSlot"></div>
-        <div id="channelListSlot"></div>
+    this.membersSidebar = new ServerMembersSidebar({
+      server: currentServer,
+      users: this.userService.getUsers(),
+      currentUser,
+      roleService: this.roleService,
+      onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
+    });
 
-        <section class="chat-panel">
+    this.element = this.createElement(`
+    <main class="bob-layout ${this.isMembersSidebarOpen ? "with-members" : "without-members"}">
+      <div id="serverListSlot"></div>
+      <div id="channelListSlot"></div>
+
+      <section class="chat-panel">
           <header class="chat-header chat-header-with-search">
             <div>
                 <h1>${escapeHTML(currentChannel ? `# ${currentChannel.name}` : "# unknown")}</h1>
@@ -274,6 +285,14 @@ const canSendMessages = this.roleService.hasPermission(
                 <button type="submit" ${this.currentChannelId ? "" : "disabled"}>🔎</button>
                 <button type="button" id="channelClearSearchButton">×</button>
             </form>
+            <button 
+              class="members-toggle-button" 
+              id="membersToggleButton" 
+              type="button"
+              title="Показать участников"
+            >
+              👥
+            </button> 
         </header>
 
           <div id="messageListSlot"></div>
@@ -292,12 +311,20 @@ const canSendMessages = this.roleService.hasPermission(
             </button>
           </form>
         </section>
+
+        ${this.isMembersSidebarOpen ? `<div id="membersSidebarSlot"></div>` : ""}
       </main>
     `);
 
     this.element.querySelector("#serverListSlot").replaceWith(this.serverList.render());
     this.element.querySelector("#channelListSlot").replaceWith(this.channelList.render());
     this.element.querySelector("#messageListSlot").replaceWith(this.messageListComponent.render());
+
+    if (this.isMembersSidebarOpen) {
+      this.element
+        .querySelector("#membersSidebarSlot")
+        .replaceWith(this.membersSidebar.render());
+    }
 
     return this.element;
   }
@@ -334,6 +361,10 @@ const canSendMessages = this.roleService.hasPermission(
     this.channelList.afterRender();
     this.messageListComponent.afterRender();
 
+    if (this.isMembersSidebarOpen && this.membersSidebar) {
+      this.membersSidebar.afterRender();
+    }
+
     this.messageForm = this.element.querySelector("#messageForm");
     this.messageInput = this.element.querySelector("#messageInput");
 
@@ -350,6 +381,13 @@ const canSendMessages = this.roleService.hasPermission(
         const input = this.element.querySelector("#channelSearchInput");
         this.searchChannelMessages(input.value);
     });
+    }
+    const membersToggleButton = this.element.querySelector("#membersToggleButton");
+
+    if (membersToggleButton) {
+      membersToggleButton.addEventListener("click", () => {
+        this.toggleMembersSidebar();
+      });
     }
 
     if (clearSearchButton) {
@@ -772,6 +810,11 @@ openCreateServerModal() {
   });
 
   modal.open();
+}
+
+toggleMembersSidebar() {
+  this.isMembersSidebarOpen = !this.isMembersSidebarOpen;
+  this.refresh();
 }
 
   openUserProfileModal(userId) {
