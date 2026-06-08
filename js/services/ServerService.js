@@ -164,7 +164,7 @@ export class ServerService {
     channel.allowedMembers = data.allowedMembers || [];
     channel.allowedRoles = data.allowedRoles || [];
   });
-}
+} 
 
   renameChannel(serverId, channelId, newName) {
     const cleanName = this.normalizeChannelName(newName);

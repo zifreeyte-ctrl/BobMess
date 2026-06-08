@@ -48,6 +48,7 @@
 .modal-content {
   padding: 22px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .modal-footer {
@@ -558,4 +559,159 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
+}
+.member-avatar,
+.server-member-main .member-avatar,
+.public-profile-avatar,
+.profile-avatar-preview,
+.server-icon-preview {
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.member-avatar img,
+.server-member-main .member-avatar img,
+.public-profile-avatar img,
+.profile-avatar-preview img,
+.server-icon-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.server-member-card {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.server-member-main {
+  min-width: 0;
+}
+
+.server-member-main > div:last-child {
+  min-width: 0;
+}
+
+.server-member-main strong,
+.server-member-main p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modal-content {
+  overflow-x: hidden;
+}
+/* FIX: images inside server settings must not break modal */
+
+.settings-box img,
+.server-members-panel img,
+.server-member-card img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* Server icon preview */
+
+.server-icon-editor {
+  display: grid !important;
+  grid-template-columns: 72px 1fr !important;
+  align-items: center !important;
+  gap: 14px !important;
+  overflow: hidden !important;
+}
+
+.server-icon-preview {
+  width: 72px !important;
+  height: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  min-height: 72px !important;
+  max-height: 72px !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.server-icon-preview img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Member avatars inside server settings */
+
+.member-avatar,
+.server-member-main .member-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.member-avatar img,
+.server-member-main .member-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Prevent horizontal breaking */
+
+.modal,
+.modal-content,
+.settings-box,
+.server-member-card,
+.server-member-main {
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.server-member-main {
+  display: grid !important;
+  grid-template-columns: 42px 1fr !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.server-member-main > div:last-child {
+  min-width: 0 !important;
+}
+
+.server-member-main strong,
+.server-member-main p {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.server-member-avatar {
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  max-width: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  overflow: hidden !important;
+}
+
+.server-member-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }

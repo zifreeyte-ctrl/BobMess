@@ -58,7 +58,7 @@ export class ServerMembersPanel {
     return `
       <article class="server-member-card">
         <div class="server-member-main">
-          <div class="member-avatar">
+          <div class="member-avatar server-member-avatar">
             ${renderAvatar(user.avatar, "?")}
           </div>
 

@@ -1126,7 +1126,7 @@ openCreateServerModal() {
   });
 
   modal.open();
-}
+} 
 
   openDeleteChannelModal(channelId) {
     const user = this.authService.getCurrentUser();
