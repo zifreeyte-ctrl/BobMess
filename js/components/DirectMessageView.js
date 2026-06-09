@@ -12,9 +12,10 @@ export class DirectMessageView extends Component {
     onSendMessage,
     onSearch,
     onClearSearch,
-    onOpenUserProfile,
     onEditMessage,
-    onDeleteMessage
+    onDeleteMessage,
+    onOpenUserProfile,
+    onToggleReaction
   }) {
     super();
 
@@ -30,6 +31,7 @@ export class DirectMessageView extends Component {
     this.onEditMessage = onEditMessage;
     this.onDeleteMessage = onDeleteMessage;
     this.onOpenUserProfile = onOpenUserProfile;
+    this.onToggleReaction = onToggleReaction;
   }
 
   render() {
@@ -46,6 +48,7 @@ export class DirectMessageView extends Component {
                   >
                     ${renderAvatar(this.friend.avatar, "?")}
                   </button>
+
                   <div>
                     <h1>${escapeHTML(this.friend.username)}</h1>
                     <p>${escapeHTML(this.friend.status || "online")}</p>
@@ -124,7 +127,11 @@ export class DirectMessageView extends Component {
 
     this.element.querySelectorAll("[data-open-user-profile]").forEach((element) => {
       element.addEventListener("click", () => {
-        this.onOpenUserProfile(element.dataset.openUserProfile);
+        const userId = element.dataset.openUserProfile;
+
+        if (userId && this.onOpenUserProfile) {
+          this.onOpenUserProfile(userId);
+        }
       });
     });
 
@@ -135,33 +142,73 @@ export class DirectMessageView extends Component {
         const messageId = messageElement.dataset.dmId;
         const authorId = messageElement.dataset.authorId;
 
-        if (authorId !== this.currentUser.id) {
-          return;
+        const items = [];
+
+        items.push({
+          label: "Поставить реакцию",
+          icon: "😀",
+          onClick: () => this.openReactionMenu(event.clientX, event.clientY, messageId)
+        });
+
+        if (authorId === this.currentUser.id) {
+          items.push({
+            label: "Редактировать",
+            icon: "✎",
+            onClick: () => this.onEditMessage(messageId)
+          });
+
+          items.push({
+            label: "Удалить",
+            icon: "🗑",
+            danger: true,
+            onClick: () => this.onDeleteMessage(messageId)
+          });
         }
 
         ContextMenu.show({
           x: event.clientX,
           y: event.clientY,
-          items: [
-            {
-              label: "Редактировать",
-              icon: "✎",
-              onClick: () => this.onEditMessage(messageId)
-            },
-            {
-              label: "Удалить",
-              icon: "🗑",
-              danger: true,
-              onClick: () => this.onDeleteMessage(messageId)
-            }
-          ]
+          items
         });
+      });
+    });
+
+    this.element.querySelectorAll("[data-dm-reaction]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const messageId = button.dataset.messageId;
+        const emoji = button.dataset.dmReaction;
+
+        this.onToggleReaction(messageId, emoji);
+      });
+    });
+
+    this.element.querySelectorAll("[data-add-dm-reaction]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        const messageId = button.dataset.addDmReaction;
+
+        this.openReactionMenu(event.clientX, event.clientY, messageId);
       });
     });
 
     if (!this.searchResults) {
       this.messageList.scrollTop = this.messageList.scrollHeight;
     }
+  }
+
+  openReactionMenu(x, y, messageId) {
+    const emojis = ["👍", "❤️", "😂", "🔥", "😮", "😢", "👏", "💀"];
+
+    ContextMenu.show({
+      x,
+      y,
+      items: emojis.map((emoji) => {
+        return {
+          label: emoji,
+          icon: "",
+          onClick: () => this.onToggleReaction(messageId, emoji)
+        };
+      })
+    });
   }
 
   renderMessages() {
@@ -239,13 +286,52 @@ export class DirectMessageView extends Component {
             >
               ${escapeHTML(author?.username || "Unknown")}
             </button>
+
             <span>${formatTime(message.createdAt)}</span>
             ${message.editedAt ? `<span class="edited-label">изменено</span>` : ""}
           </div>
 
           <p>${escapeHTML(message.text)}</p>
+
+          <div class="message-reactions">
+            ${this.renderReactions(message)}
+
+            <button 
+              class="add-reaction-button" 
+              data-add-dm-reaction="${message.id}"
+              title="Добавить реакцию"
+            >
+              +
+            </button>
+          </div>
         </div>
       </article>
     `;
+  }
+
+  renderReactions(message) {
+    const reactions = message.reactions || {};
+    const entries = Object.entries(reactions);
+
+    if (entries.length === 0) {
+      return "";
+    }
+
+    return entries
+      .map(([emoji, userIds]) => {
+        const active = userIds.includes(this.currentUser.id) ? "active" : "";
+
+        return `
+          <button 
+            class="reaction-pill ${active}"
+            data-message-id="${message.id}"
+            data-dm-reaction="${escapeHTML(emoji)}"
+          >
+            <span>${escapeHTML(emoji)}</span>
+            <strong>${userIds.length}</strong>
+          </button>
+        `;
+      })
+      .join("");
   }
 }

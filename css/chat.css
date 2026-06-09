@@ -350,3 +350,52 @@
 .friend-avatar.profile-clickable {
   padding: 0;
 }
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.reaction-pill,
+.add-reaction-button {
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  border-radius: 999px;
+  min-height: 28px;
+  padding: 4px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 800;
+  transition: 0.2s;
+}
+
+.reaction-pill:hover,
+.add-reaction-button:hover {
+  background: var(--color-bg-input);
+  border-color: var(--color-red-light);
+}
+
+.reaction-pill.active {
+  background: rgba(239, 51, 64, 0.22);
+  border-color: var(--color-red);
+  color: #fff;
+}
+
+.reaction-pill strong {
+  font-size: 12px;
+}
+
+.add-reaction-button {
+  color: var(--color-muted);
+  width: 28px;
+  justify-content: center;
+  padding: 0;
+}
+
+.add-reaction-button:hover {
+  color: #fff;
+}

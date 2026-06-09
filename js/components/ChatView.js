@@ -129,7 +129,8 @@ export class ChatView extends Component {
       onClearSearch: () => this.clearDirectMessageSearch(),
       onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
       onDeleteMessage: (messageId) => this.openDeleteDirectMessageModal(messageId),
-      onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
+      onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
+      onToggleReaction: (messageId, emoji) => this.toggleDirectMessageReaction(messageId, emoji)
     });
 
     this.element = this.createElement(`
@@ -251,7 +252,8 @@ const canSendMessages = this.roleService.hasPermission(
       currentUser,
       onDeleteMessage: (messageId) => this.deleteMessage(messageId),
       onEditMessage: (messageId) => this.openEditMessageModal(messageId),
-      onOpenUserProfile: (userId) => this.openUserProfileModal(userId)
+      onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
+      onToggleReaction: (messageId, emoji) => this.toggleMessageReaction(messageId, emoji)
     });
 
     this.membersSidebar = new ServerMembersSidebar({
@@ -978,6 +980,28 @@ toggleMembersSidebar() {
       modal.close();
       this.openDeleteServerModal();
     });
+}
+
+  toggleMessageReaction(messageId, emoji) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.chatService.toggleReaction(messageId, user.id, emoji);
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
+}
+
+toggleDirectMessageReaction(messageId, emoji) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.directMessageService.toggleReaction(messageId, user.id, emoji);
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
 }
 
   openRenameServerModal() {

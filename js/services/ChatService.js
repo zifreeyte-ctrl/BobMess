@@ -32,6 +32,38 @@ export class ChatService {
     return message;
   }
 
+  toggleReaction(messageId, userId, emoji) {
+  this.storage.update((database) => {
+    const message = database.messages.find((item) => item.id === messageId);
+
+    if (!message) {
+      throw new Error("Сообщение не найдено.");
+    }
+
+    if (!message.reactions) {
+      message.reactions = {};
+    }
+
+    if (!message.reactions[emoji]) {
+      message.reactions[emoji] = [];
+    }
+
+    const alreadyReacted = message.reactions[emoji].includes(userId);
+
+    if (alreadyReacted) {
+      message.reactions[emoji] = message.reactions[emoji].filter(
+        (id) => id !== userId
+      );
+
+      if (message.reactions[emoji].length === 0) {
+        delete message.reactions[emoji];
+      }
+    } else {
+      message.reactions[emoji].push(userId);
+    }
+  });
+}
+
   deleteMessage(messageId, userId) {
     const messages = this.storage.get("messages");
     const message = messages.find((item) => item.id === messageId);

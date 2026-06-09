@@ -260,6 +260,12 @@ export class App {
       return message && message.id && message.channelId && message.authorId;
     });
 
+    database.messages.forEach((message) => {
+      if (!message.reactions) {
+        message.reactions = {};
+      }
+    });
+
     database.directMessages = database.directMessages.filter((message) => {
       return (
         message &&
@@ -267,6 +273,12 @@ export class App {
         Array.isArray(message.userIds) &&
         message.authorId
       );
+    });
+
+    database.directMessages.forEach((message) => {
+      if (!message.reactions) {
+        message.reactions = {};
+      }
     });
 
     database.friendships = database.friendships.filter((friendship) => {
