@@ -736,3 +736,33 @@
 .devtools-textarea:focus {
   border-color: var(--color-red-light);
 }
+.modal {
+  background:
+    linear-gradient(180deg, rgba(94, 234, 212, 0.06), transparent 40%),
+    var(--color-bg-sidebar);
+  border-color: var(--color-border);
+}
+
+.modal-confirm {
+  background:
+    linear-gradient(135deg, var(--color-red-light), var(--color-red-dark));
+  color: #022c2a;
+}
+
+.modal-confirm:hover {
+  filter: brightness(1.08);
+}
+
+.invite-code {
+  color: var(--color-red-light);
+  border-color: var(--color-border);
+}
+
+.profile-avatar-preview,
+.public-profile-avatar,
+.server-icon-preview,
+.member-avatar {
+  background:
+    linear-gradient(135deg, var(--color-red-light), var(--color-red-dark));
+  color: #022c2a;
+}
