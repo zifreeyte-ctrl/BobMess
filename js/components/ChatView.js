@@ -12,6 +12,7 @@ import { ServerMembersPanel } from "./ServerMembersPanel.js";
 import { PublicProfileModal } from "./PublicProfileModal.js";
 import { DevToolsModal } from "./DevToolsModal.js";
 import { ServerMembersSidebar } from "./ServerMembersSidebar.js";
+import { PinnedMessagesModal } from "./PinnedMessagesModal.js";
 
 
 export class ChatView extends Component {
@@ -130,7 +131,9 @@ export class ChatView extends Component {
       onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
       onDeleteMessage: (messageId) => this.openDeleteDirectMessageModal(messageId),
       onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
-      onToggleReaction: (messageId, emoji) => this.toggleDirectMessageReaction(messageId, emoji)
+      onToggleReaction: (messageId, emoji) => this.toggleDirectMessageReaction(messageId, emoji),
+      onTogglePinMessage: (messageId) => this.togglePinDirectMessage(messageId),
+      onOpenPinnedMessages: () => this.openPinnedDirectMessagesModal(),
     });
 
     this.element = this.createElement(`
@@ -253,7 +256,8 @@ const canSendMessages = this.roleService.hasPermission(
       onDeleteMessage: (messageId) => this.deleteMessage(messageId),
       onEditMessage: (messageId) => this.openEditMessageModal(messageId),
       onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
-      onToggleReaction: (messageId, emoji) => this.toggleMessageReaction(messageId, emoji)
+      onToggleReaction: (messageId, emoji) => this.toggleMessageReaction(messageId, emoji),
+      onTogglePinMessage: (messageId) => this.togglePinMessage(messageId)
     });
 
     this.membersSidebar = new ServerMembersSidebar({
@@ -295,6 +299,15 @@ const canSendMessages = this.roleService.hasPermission(
             >
               👥
             </button> 
+
+            <button 
+              class="members-toggle-button" 
+              id="pinnedMessagesButton" 
+              type="button"
+              title="Закреплённые сообщения"
+            >
+              📌
+            </button>
         </header>
 
           <div id="messageListSlot"></div>
@@ -362,6 +375,13 @@ const canSendMessages = this.roleService.hasPermission(
 
     this.channelList.afterRender();
     this.messageListComponent.afterRender();
+    const pinnedMessagesButton = this.element.querySelector("#pinnedMessagesButton");
+
+    if (pinnedMessagesButton) {
+      pinnedMessagesButton.addEventListener("click", () => {
+        this.openPinnedMessagesModal();
+      });
+    }
 
     if (this.isMembersSidebarOpen && this.membersSidebar) {
       this.membersSidebar.afterRender();
@@ -417,6 +437,45 @@ const canSendMessages = this.roleService.hasPermission(
     this.refresh();
 }
 
+  openPinnedDirectMessagesModal() {
+  const user = this.authService.getCurrentUser();
+
+  const pinnedMessages = this.directMessageService.getPinnedMessages(
+    user.id,
+    this.currentFriendId
+  );
+
+  const modal = new PinnedMessagesModal({
+    title: "Закреплённые личные сообщения",
+    messages: pinnedMessages,
+    userService: this.userService,
+    onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
+    onJumpToMessage: (messageId) => this.jumpToDirectMessage(messageId)
+  });
+
+  modal.open();
+}
+
+jumpToDirectMessage(messageId) {
+  const element = this.element.querySelector(`[data-dm-id="${messageId}"]`);
+
+  if (!element) {
+    Toast.show("Сообщение не найдено на экране.", "error");
+    return;
+  }
+
+  element.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  element.classList.add("message-highlight");
+
+  setTimeout(() => {
+    element.classList.remove("message-highlight");
+  }, 1500);
+}
+
   handleSendMessage(event) {
     event.preventDefault();
 
@@ -451,6 +510,64 @@ const canSendMessages = this.roleService.hasPermission(
     this.currentFriendId = friendId;
     this.dmSearchResults = null;
     this.refresh();
+}
+
+  togglePinMessage(messageId) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.chatService.togglePinMessage(messageId, user.id);
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
+}
+
+togglePinDirectMessage(messageId) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.directMessageService.togglePinMessage(messageId, user.id);
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
+}
+
+openPinnedMessagesModal() {
+  const pinnedMessages = this.chatService.getPinnedMessagesByChannel(
+    this.currentChannelId
+  );
+
+  const modal = new PinnedMessagesModal({
+    title: "Закреплённые сообщения канала",
+    messages: pinnedMessages,
+    userService: this.userService,
+    onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
+    onJumpToMessage: (messageId) => this.jumpToMessage(messageId)
+  });
+
+  modal.open();
+}
+
+jumpToMessage(messageId) {
+  const element = this.element.querySelector(`[data-message-id="${messageId}"]`);
+
+  if (!element) {
+    Toast.show("Сообщение не найдено на экране.", "error");
+    return;
+  }
+
+  element.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  element.classList.add("message-highlight");
+
+  setTimeout(() => {
+    element.classList.remove("message-highlight");
+  }, 1500);
 }
 
   openAddFriendModal() {

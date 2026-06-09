@@ -64,6 +64,28 @@ export class ChatService {
   });
 }
 
+  togglePinMessage(messageId, userId) {
+  this.storage.update((database) => {
+    const message = database.messages.find((item) => item.id === messageId);
+
+    if (!message) {
+      throw new Error("Сообщение не найдено.");
+    }
+
+    message.isPinned = !message.isPinned;
+    message.pinnedBy = message.isPinned ? userId : null;
+    message.pinnedAt = message.isPinned ? new Date().toISOString() : null;
+  });
+}
+
+getPinnedMessagesByChannel(channelId) {
+  const messages = this.storage.get("messages") || [];
+
+  return messages.filter((message) => {
+    return message.channelId === channelId && message.isPinned;
+  });
+}
+
   deleteMessage(messageId, userId) {
     const messages = this.storage.get("messages");
     const message = messages.find((item) => item.id === messageId);

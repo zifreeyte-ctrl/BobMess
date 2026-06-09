@@ -11,7 +11,8 @@ export class MessageList extends Component {
     onDeleteMessage,
     onEditMessage,
     onOpenUserProfile,
-    onToggleReaction
+    onToggleReaction,
+    onTogglePinMessage
   }) {
     super();
 
@@ -23,6 +24,7 @@ export class MessageList extends Component {
     this.onEditMessage = onEditMessage;
     this.onOpenUserProfile = onOpenUserProfile;
     this.onToggleReaction = onToggleReaction;
+    this.onTogglePinMessage = onTogglePinMessage;
   }
 
   render() {
@@ -63,6 +65,12 @@ export class MessageList extends Component {
           label: "Поставить реакцию",
           icon: "😀",
           onClick: () => this.openReactionMenu(event.clientX, event.clientY, messageId)
+        });
+
+        items.push({
+          label: messageElement.dataset.pinned === "true" ? "Открепить" : "Закрепить",
+          icon: "📌",
+          onClick: () => this.onTogglePinMessage(messageId)
         });
 
         if (authorId === this.currentUser.id) {
@@ -168,11 +176,12 @@ export class MessageList extends Component {
     const author = this.authService.getUserById(message.authorId);
 
     return `
-      <article 
-        class="message"
-        data-message-id="${message.id}"
-        data-author-id="${message.authorId}"
-      >
+        <article 
+          class="message ${message.isPinned ? "pinned-message" : ""}"
+          data-message-id="${message.id}"
+          data-author-id="${message.authorId}"
+          data-pinned="${message.isPinned ? "true" : "false"}"
+        >
         <button 
           class="message-avatar profile-clickable"
           data-open-user-profile="${author?.id || ""}"
@@ -193,6 +202,7 @@ export class MessageList extends Component {
 
             <span>${formatTime(message.createdAt)}</span>
             ${message.editedAt ? `<span class="edited-label">изменено</span>` : ""}
+            ${message.isPinned ? `<span class="pinned-label">📌 закреплено</span>` : ""}
           </div>
 
           <p>${escapeHTML(message.text)}</p>

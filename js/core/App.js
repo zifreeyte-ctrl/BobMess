@@ -275,11 +275,23 @@ export class App {
       );
     });
 
-    database.directMessages.forEach((message) => {
-      if (!message.reactions) {
-        message.reactions = {};
-      }
-    });
+    database.messages.forEach((message) => {
+  if (!message.reactions) {
+    message.reactions = {};
+  }
+
+  if (typeof message.isPinned !== "boolean") {
+    message.isPinned = false;
+  }
+
+  if (!message.pinnedBy) {
+    message.pinnedBy = null;
+  }
+
+  if (!message.pinnedAt) {
+    message.pinnedAt = null;
+  }
+});
 
     database.friendships = database.friendships.filter((friendship) => {
       return (

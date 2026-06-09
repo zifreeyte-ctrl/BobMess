@@ -15,7 +15,9 @@ export class DirectMessageView extends Component {
     onEditMessage,
     onDeleteMessage,
     onOpenUserProfile,
-    onToggleReaction
+    onToggleReaction,
+    onTogglePinMessage,
+    onOpenPinnedMessages
   }) {
     super();
 
@@ -32,6 +34,8 @@ export class DirectMessageView extends Component {
     this.onDeleteMessage = onDeleteMessage;
     this.onOpenUserProfile = onOpenUserProfile;
     this.onToggleReaction = onToggleReaction;
+    this.onTogglePinMessage = onTogglePinMessage;
+    this.onOpenPinnedMessages = onOpenPinnedMessages;
   }
 
   render() {
@@ -70,6 +74,16 @@ export class DirectMessageView extends Component {
               placeholder="Поиск..."
               ${this.friend ? "" : "disabled"}
             />
+
+            <button 
+              class="members-toggle-button" 
+              id="dmPinnedMessagesButton" 
+              type="button"
+              title="Закреплённые сообщения"
+              ${this.friend ? "" : "disabled"}
+            >
+              📌
+            </button>
 
             <button type="submit" ${this.friend ? "" : "disabled"}>🔎</button>
             <button type="button" id="dmClearSearchButton">×</button>
@@ -150,6 +164,12 @@ export class DirectMessageView extends Component {
           onClick: () => this.openReactionMenu(event.clientX, event.clientY, messageId)
         });
 
+        items.push({
+          label: messageElement.dataset.pinned === "true" ? "Открепить" : "Закрепить",
+          icon: "📌",
+          onClick: () => this.onTogglePinMessage(messageId)
+        });
+
         if (authorId === this.currentUser.id) {
           items.push({
             label: "Редактировать",
@@ -193,6 +213,16 @@ export class DirectMessageView extends Component {
     if (!this.searchResults) {
       this.messageList.scrollTop = this.messageList.scrollHeight;
     }
+
+    const pinnedButton = this.element.querySelector("#dmPinnedMessagesButton");
+
+    if (pinnedButton) {
+      pinnedButton.addEventListener("click", () => {
+        if (this.onOpenPinnedMessages) {
+          this.onOpenPinnedMessages();
+    }
+  });
+}
   }
 
   openReactionMenu(x, y, messageId) {
@@ -266,11 +296,12 @@ export class DirectMessageView extends Component {
     const isOwn = message.authorId === this.currentUser.id;
 
     return `
-      <article 
-        class="message dm-message ${isOwn ? "own-message" : ""}"
-        data-dm-id="${message.id}"
-        data-author-id="${message.authorId}"
-      >
+        <article 
+          class="message dm-message ${isOwn ? "own-message" : ""} ${message.isPinned ? "pinned-message" : ""}"
+          data-dm-id="${message.id}"
+          data-author-id="${message.authorId}"
+          data-pinned="${message.isPinned ? "true" : "false"}"
+        >
         <button 
           class="message-avatar profile-clickable"
           data-open-user-profile="${author?.id || ""}"
@@ -289,6 +320,7 @@ export class DirectMessageView extends Component {
 
             <span>${formatTime(message.createdAt)}</span>
             ${message.editedAt ? `<span class="edited-label">изменено</span>` : ""}
+            ${message.isPinned ? `<span class="pinned-label">📌 закреплено</span>` : ""}
           </div>
 
           <p>${escapeHTML(message.text)}</p>

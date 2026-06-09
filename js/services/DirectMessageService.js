@@ -47,6 +47,32 @@ export class DirectMessageService {
   });
 }
 
+  togglePinMessage(messageId, userId) {
+  this.storage.update((database) => {
+    const message = database.directMessages.find((item) => item.id === messageId);
+
+    if (!message) {
+      throw new Error("Сообщение не найдено.");
+    }
+
+    message.isPinned = !message.isPinned;
+    message.pinnedBy = message.isPinned ? userId : null;
+    message.pinnedAt = message.isPinned ? new Date().toISOString() : null;
+  });
+}
+
+getPinnedMessages(userId, friendId) {
+  const directMessages = this.storage.get("directMessages") || [];
+
+  return directMessages.filter((message) => {
+    return (
+      message.userIds.includes(userId) &&
+      message.userIds.includes(friendId) &&
+      message.isPinned
+    );
+  });
+}
+
   sendMessage(fromUserId, toUserId, text) {
     const cleanText = text.trim();
 
