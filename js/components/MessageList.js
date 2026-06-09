@@ -252,22 +252,14 @@ export class MessageList extends Component {
 
   if (attachment.type === "image") {
     return `
-      <button 
-        class="message-attachment"
-        data-open-image
-        data-message-id="${message.id}"
-        title="Открыть изображение"
-      >
-        <img 
-          src="${attachment.dataUrl}" 
-          alt="${escapeHTML(attachment.name)}" 
+      <div class="message-attachment image-attachment">
+        <img
+          src="${attachment.dataUrl}"
+          alt="Изображение"
+          data-open-image
+          data-message-id="${message.id}"
         />
-
-        <div class="attachment-meta">
-          <span>${escapeHTML(attachment.name)}</span>
-          <small>${formatFileSize(attachment.size)}</small>
-        </div>
-      </button>
+      </div>
     `;
   }
 

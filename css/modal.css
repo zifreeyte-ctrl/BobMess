@@ -881,3 +881,98 @@
   color: var(--color-text);
   overflow-wrap: anywhere;
 }
+.image-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.82);
+  overflow: hidden;
+}
+
+.image-viewer-panel {
+  position: relative;
+
+  width: min(94vw, 1200px);
+  height: min(88vh, 820px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: visible;
+}
+
+.image-viewer-full-image {
+  max-width: 100%;
+  max-height: 100%;
+
+  width: auto;
+  height: auto;
+
+  object-fit: contain;
+  display: block;
+
+  border: none;
+  border-radius: 22px;
+
+  background: transparent;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+.image-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 32px;
+  background: rgba(0, 0, 0, 0.82);
+  overflow: hidden;
+}
+
+.image-viewer-panel {
+  max-width: 92vw;
+  max-height: 88vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: visible;
+}
+
+.image-viewer-frame {
+  max-width: 92vw;
+  max-height: 88vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 24px;
+  overflow: hidden;
+
+  background: transparent;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+}
+
+.image-viewer-full-image {
+  max-width: 92vw;
+  max-height: 88vh;
+
+  width: auto;
+  height: auto;
+
+  display: block;
+  object-fit: contain;
+
+  border: none;
+  border-radius: 24px;
+  background: transparent;
+}

@@ -698,3 +698,200 @@ body[data-theme="light"] .attachment-button {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.attachment-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 380px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.attachment-preview-card img {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.attachment-preview-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.attachment-preview-info strong {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--color-text-main);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.attachment-preview-info span {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.attachment-preview-remove {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.18);
+  color: #5eead4;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.attachment-preview-remove:hover {
+  background: rgba(45, 212, 191, 0.28);
+}
+
+.attachment-preview-error {
+  width: fit-content;
+  margin: 8px 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  border-radius: 14px;
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecdd3;
+  font-size: 13px;
+}
+.message-list {
+  position: relative;
+}
+
+.message-list.drag-over {
+  outline: 2px dashed rgba(45, 212, 191, 0.75);
+  outline-offset: -12px;
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.message-list.drag-over::after {
+  content: "Отпустите картинку, чтобы прикрепить";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  padding: 14px 20px;
+  border: 1px solid rgba(45, 212, 191, 0.55);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.9);
+  color: #5eead4;
+  font-size: 14px;
+  backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+
+.attachment-preview-row.active {
+  padding: 8px 18px;
+}
+
+.attachment-preview-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 380px;
+  margin: 8px 0;
+  padding: 10px;
+  border: 1px solid rgba(45, 212, 191, 0.35);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(14px);
+}
+
+.attachment-preview-card img {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.attachment-preview-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.attachment-preview-info strong {
+  max-width: 220px;
+  overflow: hidden;
+  color: var(--color-text);
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.attachment-preview-info span {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+.attachment-preview-remove {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(45, 212, 191, 0.18);
+  color: #5eead4;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.attachment-preview-remove:hover {
+  background: rgba(45, 212, 191, 0.28);
+}
+
+.attachment-preview-error {
+  width: fit-content;
+  margin: 8px 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(251, 113, 133, 0.4);
+  border-radius: 14px;
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecdd3;
+  font-size: 13px;
+}
+.attachment-preview-row {
+  min-height: 0;
+}
+
+.attachment-preview-row.active {
+  min-height: 92px;
+}
+
+.message-input-wrapper::after {
+  content: "Можно вставить картинку через Ctrl + V";
+  position: absolute;
+  right: 18px;
+  bottom: 100%;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.8);
+  color: rgba(94, 234, 212, 0.85);
+  font-size: 11px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: 0.2s ease;
+  pointer-events: none;
+}
+
+.message-input-wrapper:focus-within::after {
+  opacity: 1;
+  transform: translateY(0);
+}

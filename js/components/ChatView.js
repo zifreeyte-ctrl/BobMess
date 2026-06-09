@@ -404,6 +404,7 @@ const canSendMessages = this.roleService.hasPermission(
     this.messageInput = this.element.querySelector("#messageInput");
     this.messageAttachmentInput = this.element.querySelector("#messageAttachmentInput");
     this.messageAttachmentPreview = this.element.querySelector("#messageAttachmentPreview");
+    this.messageListElement = this.element.querySelector("#messageList");
 
     if (this.messageAttachmentInput && this.messageAttachmentPreview) {
       this.messageAttachmentInput.addEventListener("change", () => {
@@ -413,6 +414,76 @@ const canSendMessages = this.roleService.hasPermission(
         );
       });
     }
+
+    if (this.messageAttachmentInput && this.messageAttachmentPreview) {
+  this.element.addEventListener("paste", (event) => {
+    this.handleImagePaste(
+      event,
+      this.messageAttachmentInput,
+      this.messageAttachmentPreview
+    );
+  });
+}
+
+    if (
+  this.messageListElement &&
+  this.messageAttachmentInput &&
+  this.messageAttachmentPreview
+) {
+  this.messageListElement.addEventListener("dragover", (event) => {
+    event.preventDefault();
+    this.messageListElement.classList.add("drag-over");
+  });
+
+  this.messageListElement.addEventListener("dragleave", (event) => {
+    if (!this.messageListElement.contains(event.relatedTarget)) {
+      this.messageListElement.classList.remove("drag-over");
+    }
+  });
+
+  this.messageListElement.addEventListener("drop", (event) => {
+    event.preventDefault();
+    this.messageListElement.classList.remove("drag-over");
+
+    const file = event.dataTransfer.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      this.messageAttachmentPreview.innerHTML = `
+        <div class="attachment-preview-error">
+          Можно перетаскивать только изображения.
+        </div>
+      `;
+      this.messageAttachmentPreview.classList.add("active");
+      return;
+    }
+
+    const maxSize = 1024 * 1024 * 1.5;
+
+    if (file.size > maxSize) {
+      this.messageAttachmentPreview.innerHTML = `
+        <div class="attachment-preview-error">
+          Картинка слишком большая. Максимум 1.5 MB.
+        </div>
+      `;
+      this.messageAttachmentPreview.classList.add("active");
+      return;
+    }
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    this.messageAttachmentInput.files = dataTransfer.files;
+
+    this.renderAttachmentPreview(
+      this.messageAttachmentInput,
+      this.messageAttachmentPreview
+    );
+  });
+}
 
     this.messageForm.addEventListener("submit", (event) => {
       this.handleSendMessage(event);
@@ -525,7 +596,15 @@ jumpToDirectMessage(messageId) {
     );
 
     input.value = "";
-    attachmentInput.value = "";
+
+    if (attachmentInput) {
+      attachmentInput.value = "";
+    }
+
+    if (this.messageAttachmentPreview) {
+      this.messageAttachmentPreview.innerHTML = "";
+      this.messageAttachmentPreview.classList.remove("active");
+    }
 
     this.refresh();
   } catch (error) {
@@ -824,11 +903,58 @@ async prepareImageAttachment(file) {
     modal.open();
   }
 
+  handleImagePaste(event, input, previewElement) {
+  const items = Array.from(event.clipboardData?.items || []);
+
+  const imageItem = items.find((item) => {
+    return item.type.startsWith("image/");
+  });
+
+  if (!imageItem) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const file = imageItem.getAsFile();
+
+  if (!file) {
+    return;
+  }
+
+  const maxSize = 1024 * 1024 * 1.5;
+
+  if (file.size > maxSize) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Картинка слишком большая. Максимум 1.5 MB.
+      </div>
+    `;
+
+    previewElement.classList.add("active");
+    return;
+  }
+
+  const pastedFile = new File(
+    [file],
+    `pasted-image-${Date.now()}.png`,
+    { type: file.type || "image/png" }
+  );
+
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(pastedFile);
+
+  input.files = dataTransfer.files;
+
+  this.renderAttachmentPreview(input, previewElement);
+}
+
   renderAttachmentPreview(input, previewElement) {
   const file = input.files[0];
 
   if (!file) {
     previewElement.innerHTML = "";
+    previewElement.classList.remove("active");
     return;
   }
 
@@ -838,6 +964,23 @@ async prepareImageAttachment(file) {
         Можно прикреплять только изображения.
       </div>
     `;
+
+    previewElement.classList.add("active");
+    input.value = "";
+    return;
+  }
+
+  const maxSize = 1024 * 1024 * 1.5;
+
+  if (file.size > maxSize) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Картинка слишком большая. Максимум 1.5 MB.
+      </div>
+    `;
+
+    previewElement.classList.add("active");
+    input.value = "";
     return;
   }
 
@@ -845,24 +988,32 @@ async prepareImageAttachment(file) {
 
   previewElement.innerHTML = `
     <div class="attachment-preview-card">
-      <img src="${imageUrl}" alt="preview" />
+      <img src="${imageUrl}" alt="Предпросмотр изображения" />
 
       <div class="attachment-preview-info">
         <strong>${file.name}</strong>
         <span>Картинка прикреплена</span>
       </div>
 
-      <button type="button" id="clearAttachmentButton">
+      <button
+        class="attachment-preview-remove"
+        type="button"
+        id="clearAttachmentButton"
+        title="Убрать изображение"
+      >
         ×
       </button>
     </div>
   `;
+
+  previewElement.classList.add("active");
 
   previewElement
     .querySelector("#clearAttachmentButton")
     .addEventListener("click", () => {
       input.value = "";
       previewElement.innerHTML = "";
+      previewElement.classList.remove("active");
       URL.revokeObjectURL(imageUrl);
     });
 }

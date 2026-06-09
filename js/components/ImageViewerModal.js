@@ -1,33 +1,49 @@
-import { Modal } from "./Modal.js";
-import { escapeHTML, formatFileSize } from "../utils/helpers.js";
-
 export class ImageViewerModal {
   constructor({ attachment }) {
     this.attachment = attachment;
+    this.element = null;
+    this.handleEscClose = this.handleEscClose.bind(this);
   }
 
   open() {
-    const modal = new Modal({
-      title: "Просмотр изображения",
-      confirmText: "Закрыть",
-      content: `
-        <div class="image-viewer">
-          <img 
-            src="${this.attachment.dataUrl}" 
-            alt="${escapeHTML(this.attachment.name)}" 
-          />
+    this.element = document.createElement("div");
+    this.element.className = "image-viewer-backdrop";
 
-          <div class="image-viewer-meta">
-            <strong>${escapeHTML(this.attachment.name)}</strong>
-            <span>${formatFileSize(this.attachment.size)}</span>
-          </div>
+    this.element.innerHTML = `
+      <div class="image-viewer-panel">
+        <div class="image-viewer-frame">
+          <img
+            class="image-viewer-full-image"
+            src="${this.attachment.dataUrl}"
+            alt="Изображение"
+          />
         </div>
-      `,
-      onConfirm: () => {
-        modal.close();
+      </div>
+    `;
+
+    document.body.appendChild(this.element);
+
+    this.element.addEventListener("click", (event) => {
+      if (event.target === this.element) {
+        this.close();
       }
     });
 
-    modal.open();
+    document.addEventListener("keydown", this.handleEscClose);
+  }
+
+  handleEscClose(event) {
+    if (event.key === "Escape") {
+      this.close();
+    }
+  }
+
+  close() {
+    document.removeEventListener("keydown", this.handleEscClose);
+
+    if (this.element) {
+      this.element.remove();
+      this.element = null;
+    }
   }
 }

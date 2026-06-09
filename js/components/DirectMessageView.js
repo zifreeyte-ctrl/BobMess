@@ -143,6 +143,7 @@ export class DirectMessageView extends Component {
     this.attachmentInput = this.element.querySelector("#dmAttachmentInput");
     this.attachmentPreview = this.element.querySelector("#dmAttachmentPreview");
     this.attachmentButton = this.element.querySelector("#dmAttachmentButton");
+    this.messageList = this.element.querySelector("#dmMessageList");
 
     if (this.attachmentButton && this.attachmentInput) {
       this.attachmentButton.addEventListener("click", () => {
@@ -158,19 +159,98 @@ export class DirectMessageView extends Component {
         );
       });
     }
-    this.messageList = this.element.querySelector("#dmMessageList");
 
-    this.form.addEventListener("submit", (event) => {
+    if (this.attachmentInput && this.attachmentPreview) {
+  this.element.addEventListener("paste", (event) => {
+    this.handleImagePaste(
+      event,
+      this.attachmentInput,
+      this.attachmentPreview
+    );
+  });
+}
+
+if (this.messageList && this.attachmentInput && this.attachmentPreview) {
+  this.messageList.addEventListener("dragover", (event) => {
     event.preventDefault();
+    this.messageList.classList.add("drag-over");
+  });
 
-    if (!this.friend) {
+  this.messageList.addEventListener("dragleave", (event) => {
+    if (!this.messageList.contains(event.relatedTarget)) {
+      this.messageList.classList.remove("drag-over");
+    }
+  });
+
+  this.messageList.addEventListener("drop", (event) => {
+    event.preventDefault();
+    this.messageList.classList.remove("drag-over");
+
+    const file = event.dataTransfer.files[0];
+
+    if (!file) {
       return;
     }
 
-    const file = this.attachmentInput.files[0] || null;
+    if (!file.type.startsWith("image/")) {
+      this.attachmentPreview.innerHTML = `
+        <div class="attachment-preview-error">
+          Можно перетаскивать только изображения.
+        </div>
+      `;
+      this.attachmentPreview.classList.add("active");
+      return;
+    }
 
-    this.onSendMessage(this.input.value, file);
+    const maxSize = 1024 * 1024 * 1.5;
+
+    if (file.size > maxSize) {
+      this.attachmentPreview.innerHTML = `
+        <div class="attachment-preview-error">
+          Картинка слишком большая. Максимум 1.5 MB.
+        </div>
+      `;
+      this.attachmentPreview.classList.add("active");
+      return;
+    }
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    this.attachmentInput.files = dataTransfer.files;
+
+    this.renderAttachmentPreview(
+      this.attachmentInput,
+      this.attachmentPreview
+    );
   });
+}
+    
+    this.messageList = this.element.querySelector("#dmMessageList");
+
+    this.form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      if (!this.friend) {
+        return;
+      }
+
+      const file = this.attachmentInput.files[0] || null;
+      const text = this.input.value;
+
+      this.onSendMessage(text, file);
+
+      this.input.value = "";
+
+      if (this.attachmentInput) {
+        this.attachmentInput.value = "";
+      }
+
+      if (this.attachmentPreview) {
+        this.attachmentPreview.innerHTML = "";
+        this.attachmentPreview.classList.remove("active");
+      }
+    });
 
     this.element.querySelector("#dmSearchForm").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -302,11 +382,58 @@ export class DirectMessageView extends Component {
     });
   }
 
-  renderAttachmentPreview(input, previewElement) {
+  handleImagePaste(event, input, previewElement) {
+  const items = Array.from(event.clipboardData?.items || []);
+
+  const imageItem = items.find((item) => {
+    return item.type.startsWith("image/");
+  });
+
+  if (!imageItem) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const file = imageItem.getAsFile();
+
+  if (!file) {
+    return;
+  }
+
+  const maxSize = 1024 * 1024 * 1.5;
+
+  if (file.size > maxSize) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Картинка слишком большая. Максимум 1.5 MB.
+      </div>
+    `;
+
+    previewElement.classList.add("active");
+    return;
+  }
+
+  const pastedFile = new File(
+    [file],
+    `pasted-image-${Date.now()}.png`,
+    { type: file.type || "image/png" }
+  );
+
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(pastedFile);
+
+  input.files = dataTransfer.files;
+
+  this.renderAttachmentPreview(input, previewElement);
+}
+
+renderAttachmentPreview(input, previewElement) {
   const file = input.files[0];
 
   if (!file) {
     previewElement.innerHTML = "";
+    previewElement.classList.remove("active");
     return;
   }
 
@@ -316,6 +443,23 @@ export class DirectMessageView extends Component {
         Можно прикреплять только изображения.
       </div>
     `;
+
+    previewElement.classList.add("active");
+    input.value = "";
+    return;
+  }
+
+  const maxSize = 1024 * 1024 * 1.5;
+
+  if (file.size > maxSize) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Картинка слишком большая. Максимум 1.5 MB.
+      </div>
+    `;
+
+    previewElement.classList.add("active");
+    input.value = "";
     return;
   }
 
@@ -323,24 +467,32 @@ export class DirectMessageView extends Component {
 
   previewElement.innerHTML = `
     <div class="attachment-preview-card">
-      <img src="${imageUrl}" alt="preview" />
+      <img src="${imageUrl}" alt="Предпросмотр изображения" />
 
-      <div>
+      <div class="attachment-preview-info">
         <strong>${file.name}</strong>
         <span>Картинка прикреплена</span>
       </div>
 
-      <button type="button" id="clearDmAttachmentButton">
+      <button
+        class="attachment-preview-remove"
+        type="button"
+        id="clearDmAttachmentButton"
+        title="Убрать изображение"
+      >
         ×
       </button>
     </div>
   `;
+
+  previewElement.classList.add("active");
 
   previewElement
     .querySelector("#clearDmAttachmentButton")
     .addEventListener("click", () => {
       input.value = "";
       previewElement.innerHTML = "";
+      previewElement.classList.remove("active");
       URL.revokeObjectURL(imageUrl);
     });
 }
@@ -456,22 +608,14 @@ export class DirectMessageView extends Component {
 
   if (attachment.type === "image") {
     return `
-      <button 
-        class="message-attachment"
-        data-open-dm-image
-        data-message-id="${message.id}"
-        title="Открыть изображение"
-      >
-        <img 
-          src="${attachment.dataUrl}" 
-          alt="${escapeHTML(attachment.name)}" 
+      <div class="message-attachment image-attachment">
+        <img
+          src="${attachment.dataUrl}"
+          alt="Изображение"
+          data-open-dm-image
+          data-message-id="${message.id}"
         />
-
-        <div class="attachment-meta">
-          <span>${escapeHTML(attachment.name)}</span>
-          <small>${formatFileSize(attachment.size)}</small>
-        </div>
-      </button>
+      </div>
     `;
   }
 
