@@ -40,3 +40,29 @@ export function readFileAsDataUrl(file) {
     reader.readAsDataURL(file);
   });
 }
+export function createImageAttachment(file, dataUrl) {
+  return {
+    id: generateId("attachment"),
+    type: "image",
+    name: file.name,
+    size: file.size,
+    mimeType: file.type,
+    dataUrl
+  };
+}
+
+export function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes)) {
+    return "0 KB";
+  }
+
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}

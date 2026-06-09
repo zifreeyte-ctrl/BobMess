@@ -73,28 +73,33 @@ getPinnedMessages(userId, friendId) {
   });
 }
 
-  sendMessage(fromUserId, toUserId, text) {
-    const cleanText = text.trim();
+  sendMessage(fromUserId, toUserId, text, attachment = null) {
+  const cleanText = text.trim();
 
-    if (!cleanText) {
-      throw new Error("Сообщение не может быть пустым.");
-    }
-
-    const message = {
-      id: generateId("dm"),
-      userIds: [fromUserId, toUserId],
-      authorId: fromUserId,
-      text: cleanText,
-      createdAt: getCurrentDate(),
-      editedAt: null
-    };
-
-    this.storage.update((database) => {
-      database.directMessages.push(message);
-    });
-
-    return message;
+  if (!cleanText && !attachment) {
+    throw new Error("Сообщение не может быть пустым.");
   }
+
+  const message = {
+    id: generateId("dm"),
+    userIds: [fromUserId, toUserId],
+    authorId: fromUserId,
+    text: cleanText,
+    attachment,
+    reactions: {},
+    isPinned: false,
+    pinnedBy: null,
+    pinnedAt: null,
+    createdAt: getCurrentDate(),
+    editedAt: null
+  };
+
+  this.storage.update((database) => {
+    database.directMessages.push(message);
+  });
+
+  return message;
+}
 
   editMessage(messageId, userId, newText) {
     const cleanText = newText.trim();

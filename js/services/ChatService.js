@@ -12,25 +12,33 @@ export class ChatService {
     return messages.filter((message) => message.channelId === channelId);
   }
 
-  sendMessage(channelId, authorId, text) {
-    if (!text.trim()) {
-      throw new Error("Сообщение не может быть пустым.");
-    }
+  sendMessage(channelId, authorId, text, attachment = null) {
+  const cleanText = text.trim();
 
-    const message = new Message({
-      id: generateId("message"),
-      channelId,
-      authorId,
-      text: text.trim(),
-      createdAt: getCurrentDate()
-    });
-
-    this.storage.update((database) => {
-      database.messages.push(message);
-    });
-
-    return message;
+  if (!cleanText && !attachment) {
+    throw new Error("Сообщение не может быть пустым.");
   }
+
+  const message = {
+    id: generateId("message"),
+    channelId,
+    authorId,
+    text: cleanText,
+    attachment,
+    reactions: {},
+    isPinned: false,
+    pinnedBy: null,
+    pinnedAt: null,
+    createdAt: getCurrentDate(),
+    editedAt: null
+  };
+
+  this.storage.update((database) => {
+    database.messages.push(message);
+  });
+
+  return message;
+}
 
   toggleReaction(messageId, userId, emoji) {
   this.storage.update((database) => {

@@ -857,3 +857,27 @@
 .empty-pins h3 {
   color: var(--color-text);
 }
+.image-viewer {
+  display: grid;
+  gap: 14px;
+}
+
+.image-viewer img {
+  width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: 18px;
+  background: #000;
+}
+
+.image-viewer-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--color-muted);
+}
+
+.image-viewer-meta strong {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}

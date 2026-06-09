@@ -276,8 +276,30 @@ export class App {
     });
 
     database.messages.forEach((message) => {
+  if (!("attachment" in message)) {
+  message.attachment = null;
+  }
+
+  if (typeof message.isPinned !== "boolean") {
+    message.isPinned = false;
+  }
+
+  if (!message.pinnedBy) {
+    message.pinnedBy = null;
+  }
+
+  if (!message.pinnedAt) {
+    message.pinnedAt = null;
+  }
+});
+
+database.directMessages.forEach((message) => {
   if (!message.reactions) {
     message.reactions = {};
+  }
+
+  if (!("attachment" in message)) {
+    message.attachment = null;
   }
 
   if (typeof message.isPinned !== "boolean") {

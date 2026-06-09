@@ -1,6 +1,7 @@
 import { Component } from "./Component.js";
 import { ContextMenu } from "./ContextMenu.js";
-import { formatTime, escapeHTML, renderAvatar } from "../utils/helpers.js";
+import { formatTime, escapeHTML, renderAvatar, formatFileSize } from "../utils/helpers.js";
+import { ImageViewerModal } from "./ImageViewerModal.js";
 
 export class MessageList extends Component {
   constructor({
@@ -51,6 +52,23 @@ export class MessageList extends Component {
         this.onOpenUserProfile(userId);
       });
     });
+
+    this.element.querySelectorAll("[data-open-image]").forEach((image) => {
+  image.addEventListener("click", () => {
+    const messageId = image.dataset.messageId;
+    const message = this.messages.find((item) => item.id === messageId);
+
+    if (!message || !message.attachment) {
+      return;
+    }
+
+    const viewer = new ImageViewerModal({
+      attachment: message.attachment
+    });
+
+    viewer.open();
+  });
+});
 
     this.element.querySelectorAll("[data-message-id]").forEach((messageElement) => {
       messageElement.addEventListener("contextmenu", (event) => {
@@ -205,7 +223,9 @@ export class MessageList extends Component {
             ${message.isPinned ? `<span class="pinned-label">📌 закреплено</span>` : ""}
           </div>
 
-          <p>${escapeHTML(message.text)}</p>
+          ${message.text ? `<p>${escapeHTML(message.text)}</p>` : ""}
+
+          ${this.renderAttachment(message)}
 
           <div class="message-reactions">
             ${this.renderReactions(message)}
@@ -222,6 +242,37 @@ export class MessageList extends Component {
       </article>
     `;
   }
+
+  renderAttachment(message) {
+  const attachment = message.attachment;
+
+  if (!attachment) {
+    return "";
+  }
+
+  if (attachment.type === "image") {
+    return `
+      <button 
+        class="message-attachment"
+        data-open-image
+        data-message-id="${message.id}"
+        title="Открыть изображение"
+      >
+        <img 
+          src="${attachment.dataUrl}" 
+          alt="${escapeHTML(attachment.name)}" 
+        />
+
+        <div class="attachment-meta">
+          <span>${escapeHTML(attachment.name)}</span>
+          <small>${formatFileSize(attachment.size)}</small>
+        </div>
+      </button>
+    `;
+  }
+
+  return "";
+}
 
   renderReactions(message) {
     const reactions = message.reactions || {};

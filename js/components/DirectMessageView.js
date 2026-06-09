@@ -1,42 +1,43 @@
 import { Component } from "./Component.js";
 import { ContextMenu } from "./ContextMenu.js";
-import { formatTime, escapeHTML, renderAvatar } from "../utils/helpers.js";
+import { formatTime, escapeHTML, renderAvatar, formatFileSize } from "../utils/helpers.js";
+import { ImageViewerModal } from "./ImageViewerModal.js";
 
 export class DirectMessageView extends Component {
   constructor({
-    currentUser,
-    friend,
-    messages,
-    searchResults = null,
-    userService,
-    onSendMessage,
-    onSearch,
-    onClearSearch,
-    onEditMessage,
-    onDeleteMessage,
-    onOpenUserProfile,
-    onToggleReaction,
-    onTogglePinMessage,
-    onOpenPinnedMessages
-  }) {
-    super();
+  currentUser,
+  friend,
+  messages,
+  searchResults = null,
+  userService,
+  onSendMessage,
+  onSearch,
+  onClearSearch,
+  onEditMessage,
+  onDeleteMessage,
+  onOpenUserProfile,
+  onToggleReaction,
+  onTogglePinMessage,
+  onOpenPinnedMessages
+}) {
+  super();
 
-    this.currentUser = currentUser;
-    this.friend = friend;
-    this.messages = messages;
-    this.searchResults = searchResults;
-    this.userService = userService;
+  this.currentUser = currentUser;
+  this.friend = friend;
+  this.messages = messages;
+  this.searchResults = searchResults;
+  this.userService = userService;
 
-    this.onSendMessage = onSendMessage;
-    this.onSearch = onSearch;
-    this.onClearSearch = onClearSearch;
-    this.onEditMessage = onEditMessage;
-    this.onDeleteMessage = onDeleteMessage;
-    this.onOpenUserProfile = onOpenUserProfile;
-    this.onToggleReaction = onToggleReaction;
-    this.onTogglePinMessage = onTogglePinMessage;
-    this.onOpenPinnedMessages = onOpenPinnedMessages;
-  }
+  this.onSendMessage = onSendMessage;
+  this.onSearch = onSearch;
+  this.onClearSearch = onClearSearch;
+  this.onEditMessage = onEditMessage;
+  this.onDeleteMessage = onDeleteMessage;
+  this.onOpenUserProfile = onOpenUserProfile;
+  this.onToggleReaction = onToggleReaction;
+  this.onTogglePinMessage = onTogglePinMessage;
+  this.onOpenPinnedMessages = onOpenPinnedMessages;
+}
 
   render() {
     this.element = this.createElement(`
@@ -94,7 +95,28 @@ export class DirectMessageView extends Component {
           ${this.renderMessages()}
         </div>
 
+        <div class="attachment-preview-row" id="dmAttachmentPreview"></div>
+
         <form class="message-form compact-message-form" id="dmMessageForm">
+          
+          <button 
+            class="attachment-button" 
+            id="dmAttachmentButton"
+            type="button"
+            title="Прикрепить изображение"
+            ${this.friend ? "" : "disabled"}
+          >
+            🖼
+          </button>
+
+          <input 
+            id="dmAttachmentInput" 
+            type="file" 
+            accept="image/*" 
+            hidden 
+            ${this.friend ? "" : "disabled"}
+          />
+
           <input
             id="dmMessageInput"
             type="text"
@@ -106,6 +128,7 @@ export class DirectMessageView extends Component {
           <button type="submit" ${this.friend ? "" : "disabled"}>
             ➤
           </button>
+
         </form>
       </section>
     `);
@@ -116,17 +139,38 @@ export class DirectMessageView extends Component {
   afterRender() {
     this.form = this.element.querySelector("#dmMessageForm");
     this.input = this.element.querySelector("#dmMessageInput");
+
+    this.attachmentInput = this.element.querySelector("#dmAttachmentInput");
+    this.attachmentPreview = this.element.querySelector("#dmAttachmentPreview");
+    this.attachmentButton = this.element.querySelector("#dmAttachmentButton");
+
+    if (this.attachmentButton && this.attachmentInput) {
+      this.attachmentButton.addEventListener("click", () => {
+        this.attachmentInput.click();
+      });
+    } 
+
+    if (this.attachmentInput && this.attachmentPreview) {
+      this.attachmentInput.addEventListener("change", () => {
+        this.renderAttachmentPreview( 
+          this.attachmentInput,
+          this.attachmentPreview
+        );
+      });
+    }
     this.messageList = this.element.querySelector("#dmMessageList");
 
     this.form.addEventListener("submit", (event) => {
-      event.preventDefault();
+    event.preventDefault();
 
-      if (!this.friend) {
-        return;
-      }
+    if (!this.friend) {
+      return;
+    }
 
-      this.onSendMessage(this.input.value);
-    });
+    const file = this.attachmentInput.files[0] || null;
+
+    this.onSendMessage(this.input.value, file);
+  });
 
     this.element.querySelector("#dmSearchForm").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -138,6 +182,23 @@ export class DirectMessageView extends Component {
     this.element.querySelector("#dmClearSearchButton").addEventListener("click", () => {
       this.onClearSearch();
     });
+
+    this.element.querySelectorAll("[data-open-dm-image]").forEach((image) => {
+  image.addEventListener("click", () => {
+    const messageId = image.dataset.messageId;
+    const message = this.messages.find((item) => item.id === messageId);
+
+    if (!message || !message.attachment) {
+      return;
+    }
+
+    const viewer = new ImageViewerModal({
+      attachment: message.attachment
+    });
+
+    viewer.open();
+  });
+});
 
     this.element.querySelectorAll("[data-open-user-profile]").forEach((element) => {
       element.addEventListener("click", () => {
@@ -241,6 +302,49 @@ export class DirectMessageView extends Component {
     });
   }
 
+  renderAttachmentPreview(input, previewElement) {
+  const file = input.files[0];
+
+  if (!file) {
+    previewElement.innerHTML = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Можно прикреплять только изображения.
+      </div>
+    `;
+    return;
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+
+  previewElement.innerHTML = `
+    <div class="attachment-preview-card">
+      <img src="${imageUrl}" alt="preview" />
+
+      <div>
+        <strong>${file.name}</strong>
+        <span>Картинка прикреплена</span>
+      </div>
+
+      <button type="button" id="clearDmAttachmentButton">
+        ×
+      </button>
+    </div>
+  `;
+
+  previewElement
+    .querySelector("#clearDmAttachmentButton")
+    .addEventListener("click", () => {
+      input.value = "";
+      previewElement.innerHTML = "";
+      URL.revokeObjectURL(imageUrl);
+    });
+}
+
   renderMessages() {
     if (!this.friend) {
       return `
@@ -323,7 +427,9 @@ export class DirectMessageView extends Component {
             ${message.isPinned ? `<span class="pinned-label">📌 закреплено</span>` : ""}
           </div>
 
-          <p>${escapeHTML(message.text)}</p>
+          ${message.text ? `<p>${escapeHTML(message.text)}</p>` : ""}
+
+          ${this.renderAttachment(message)}
 
           <div class="message-reactions">
             ${this.renderReactions(message)}
@@ -340,6 +446,37 @@ export class DirectMessageView extends Component {
       </article>
     `;
   }
+
+  renderAttachment(message) {
+  const attachment = message.attachment;
+
+  if (!attachment) {
+    return "";
+  }
+
+  if (attachment.type === "image") {
+    return `
+      <button 
+        class="message-attachment"
+        data-open-dm-image
+        data-message-id="${message.id}"
+        title="Открыть изображение"
+      >
+        <img 
+          src="${attachment.dataUrl}" 
+          alt="${escapeHTML(attachment.name)}" 
+        />
+
+        <div class="attachment-meta">
+          <span>${escapeHTML(attachment.name)}</span>
+          <small>${formatFileSize(attachment.size)}</small>
+        </div>
+      </button>
+    `;
+  }
+
+  return "";
+}
 
   renderReactions(message) {
     const reactions = message.reactions || {};

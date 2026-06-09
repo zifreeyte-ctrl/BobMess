@@ -7,7 +7,7 @@ import { Toast } from "./Toast.js";
 import { ProfileModal } from "./ProfileModal.js";
 import { FriendList } from "./FriendList.js";
 import { DirectMessageView } from "./DirectMessageView.js";
-import { escapeHTML, readFileAsDataUrl, renderAvatar } from "../utils/helpers.js";
+import { escapeHTML, readFileAsDataUrl, renderAvatar, createImageAttachment } from "../utils/helpers.js";
 import { ServerMembersPanel } from "./ServerMembersPanel.js";
 import { PublicProfileModal } from "./PublicProfileModal.js";
 import { DevToolsModal } from "./DevToolsModal.js";
@@ -125,7 +125,7 @@ export class ChatView extends Component {
       messages: dmMessages,
       searchResults: this.dmSearchResults,
       userService: this.userService,
-      onSendMessage: (text) => this.sendDirectMessage(text),
+      onSendMessage: (text, file) => this.sendDirectMessage(text, file),
       onSearch: (query) => this.searchDirectMessages(query),
       onClearSearch: () => this.clearDirectMessageSearch(),
       onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
@@ -312,6 +312,8 @@ const canSendMessages = this.roleService.hasPermission(
 
           <div id="messageListSlot"></div>
 
+          <div class="attachment-preview-row" id="messageAttachmentPreview"></div>
+
           <form class="message-form" id="messageForm">
             <input
               id="messageInput"
@@ -320,6 +322,17 @@ const canSendMessages = this.roleService.hasPermission(
               autocomplete="off"
               ${this.currentChannelId && canSendMessages ? "" : "disabled"}
             />
+
+            <label class="attachment-button" title="Прикрепить изображение">
+                  🖼
+              <input 
+                id="messageAttachmentInput" 
+                type="file" 
+                accept="image/*" 
+                hidden
+                ${this.currentChannelId && canSendMessages ? "" : "disabled"}
+              />
+            </label>
 
             <button type="submit" ${this.currentChannelId && canSendMessages ? "" : "disabled"}>
               Отправить
@@ -389,6 +402,17 @@ const canSendMessages = this.roleService.hasPermission(
 
     this.messageForm = this.element.querySelector("#messageForm");
     this.messageInput = this.element.querySelector("#messageInput");
+    this.messageAttachmentInput = this.element.querySelector("#messageAttachmentInput");
+    this.messageAttachmentPreview = this.element.querySelector("#messageAttachmentPreview");
+
+    if (this.messageAttachmentInput && this.messageAttachmentPreview) {
+      this.messageAttachmentInput.addEventListener("change", () => {
+        this.renderAttachmentPreview(
+          this.messageAttachmentInput,
+          this.messageAttachmentPreview
+        );
+      });
+    }
 
     this.messageForm.addEventListener("submit", (event) => {
       this.handleSendMessage(event);
@@ -476,24 +500,38 @@ jumpToDirectMessage(messageId) {
   }, 1500);
 }
 
-  handleSendMessage(event) {
-    event.preventDefault();
+  async handleSendMessage(event) {
+  event.preventDefault();
 
-    const currentUser = this.authService.getCurrentUser();
-    const input = event.target.querySelector("#messageInput");
-    const text = input.value.trim();
+  const currentUser = this.authService.getCurrentUser();
+  const input = event.target.querySelector("#messageInput");
+  const attachmentInput = event.target.querySelector("#messageAttachmentInput");
 
-    try {
-      if (!this.roleService.hasPermission(this.currentServerId, currentUser.id, "sendMessages")) {
+  const text = input.value.trim();
+  const file = attachmentInput.files[0] || null;
+
+  try {
+    if (!this.roleService.hasPermission(this.currentServerId, currentUser.id, "sendMessages")) {
       throw new Error("У тебя нет права отправлять сообщения.");
     }
-      this.chatService.sendMessage(this.currentChannelId, currentUser.id, text);
-      input.value = "";
-      this.refresh();
-    } catch (error) {
-      Toast.show(error.message, "error");
-    }
+
+    const attachment = await this.prepareImageAttachment(file);
+
+    this.chatService.sendMessage(
+      this.currentChannelId,
+      currentUser.id,
+      text,
+      attachment
+    );
+
+    input.value = "";
+    attachmentInput.value = "";
+
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
   }
+}
 
   openDirectMessages() {
     this.mode = "dm";
@@ -708,16 +746,44 @@ openCreateServerModal() {
     modal.open();
   }
 
-  sendDirectMessage(text) {
-    const user = this.authService.getCurrentUser();
+async sendDirectMessage(text, file = null) {
+  const user = this.authService.getCurrentUser();
 
-    try {
-      this.directMessageService.sendMessage(user.id, this.currentFriendId, text);
-      this.refresh();
-    } catch (error) {
-      Toast.show(error.message, "error");
-    }
+  try {
+    const attachment = await this.prepareImageAttachment(file);
+
+    this.directMessageService.sendMessage(
+      user.id,
+      this.currentFriendId,
+      text,
+      attachment
+    );
+
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
   }
+}
+
+async prepareImageAttachment(file) {
+  if (!file) {
+    return null;
+  }
+
+  const maxSize = 1024 * 1024 * 1.5;
+
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Можно прикреплять только изображения.");
+  }
+
+  if (file.size > maxSize) {
+    throw new Error("Картинка слишком большая. Максимум 1.5 MB.");
+  }
+
+  const dataUrl = await readFileAsDataUrl(file);
+
+  return createImageAttachment(file, dataUrl);
+}
 
   openEditDirectMessageModal(messageId) {
     const user = this.authService.getCurrentUser();
@@ -757,6 +823,49 @@ openCreateServerModal() {
 
     modal.open();
   }
+
+  renderAttachmentPreview(input, previewElement) {
+  const file = input.files[0];
+
+  if (!file) {
+    previewElement.innerHTML = "";
+    return;
+  }
+
+  if (!file.type.startsWith("image/")) {
+    previewElement.innerHTML = `
+      <div class="attachment-preview-error">
+        Можно прикреплять только изображения.
+      </div>
+    `;
+    return;
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+
+  previewElement.innerHTML = `
+    <div class="attachment-preview-card">
+      <img src="${imageUrl}" alt="preview" />
+
+      <div class="attachment-preview-info">
+        <strong>${file.name}</strong>
+        <span>Картинка прикреплена</span>
+      </div>
+
+      <button type="button" id="clearAttachmentButton">
+        ×
+      </button>
+    </div>
+  `;
+
+  previewElement
+    .querySelector("#clearAttachmentButton")
+    .addEventListener("click", () => {
+      input.value = "";
+      previewElement.innerHTML = "";
+      URL.revokeObjectURL(imageUrl);
+    });
+}
 
   openDeleteDirectMessageModal(messageId) {
     const modal = new Modal({

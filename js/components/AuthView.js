@@ -16,7 +16,7 @@ export class AuthView extends Component {
           <div class="auth-brand">
             <div class="auth-logo">B</div>
             <h1>BOB</h1>
-            <p>Красный мессенджер нового поколения</p>
+            <p>мессенджер нового поколения</p>
           </div>
 
           <form class="auth-form" id="authForm">
