@@ -404,6 +404,7 @@ const canSendMessages = this.roleService.hasPermission(
       this.handleInviteFromUrl();
     }, 100);
 
+    this.serverList?.afterRender();
     this.bindMobileSidebarControls();
 
     if (this.mode === "dm") {
@@ -561,16 +562,23 @@ const canSendMessages = this.roleService.hasPermission(
   const backdrop = this.element.querySelector("#mobileSidebarBackdrop");
 
   if (toggleButton) {
-    toggleButton.addEventListener("click", () => {
+    toggleButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
       this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
-      this.refresh();
+
+      this.element.classList.toggle(
+        "mobile-sidebar-open",
+        this.isMobileSidebarOpen
+      );
     });
   }
 
   if (backdrop) {
     backdrop.addEventListener("click", () => {
       this.isMobileSidebarOpen = false;
-      this.refresh();
+      this.element.classList.remove("mobile-sidebar-open");
     });
   }
 }
