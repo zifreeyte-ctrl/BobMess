@@ -56,6 +56,7 @@ export class ChatView extends Component {
 
     this.mode = "server";
     this.isMembersSidebarOpen = true;
+    this.isMobileSidebarOpen = false;
     this.membersSidebar = null;
 
     this.serverList = null;
@@ -149,9 +150,24 @@ export class ChatView extends Component {
     });
 
     this.element = this.createElement(`
-      <main class="bob-layout">
+      <main class="bob-layout dm-layout ${this.isMobileSidebarOpen ? "mobile-sidebar-open" : ""}">
         <div id="serverListSlot"></div>
-        <div id="friendListSlot"></div>
+
+        <button
+          class="mobile-panel-toggle"
+          id="mobileSidebarToggle"
+          type="button"
+          title="Открыть список друзей"
+        >
+          ☰
+        </button>
+
+        <div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop"></div>
+
+        <div class="mobile-sidebar-panel">
+          <div id="friendListSlot"></div>
+        </div>
+
         <div id="directMessageSlot"></div>
       </main>
     `);
@@ -281,9 +297,23 @@ const canSendMessages = this.roleService.hasPermission(
     });
 
     this.element = this.createElement(`
-    <main class="bob-layout ${this.isMembersSidebarOpen ? "with-members" : "without-members"}">
+    <main class="bob-layout ${this.isMembersSidebarOpen ? "with-members" : "without-members"} ${this.isMobileSidebarOpen ? "mobile-sidebar-open" : ""}">
       <div id="serverListSlot"></div>
-      <div id="channelListSlot"></div>
+
+      <button
+        class="mobile-panel-toggle"
+        id="mobileSidebarToggle"
+        type="button"
+        title="Открыть каналы"
+      >
+        ☰
+      </button>
+
+      <div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop"></div>
+
+      <div class="mobile-sidebar-panel">
+        <div id="channelListSlot"></div>
+      </div>
 
       <section class="chat-panel">
           <header class="chat-header chat-header-with-search">
@@ -374,7 +404,7 @@ const canSendMessages = this.roleService.hasPermission(
       this.handleInviteFromUrl();
     }, 100);
 
-    this.serverList?.afterRender();
+    this.bindMobileSidebarControls();
 
     if (this.mode === "dm") {
       this.friendList?.afterRender();
@@ -526,11 +556,31 @@ const canSendMessages = this.roleService.hasPermission(
     }
   }
 
+  bindMobileSidebarControls() {
+  const toggleButton = this.element.querySelector("#mobileSidebarToggle");
+  const backdrop = this.element.querySelector("#mobileSidebarBackdrop");
+
+  if (toggleButton) {
+    toggleButton.addEventListener("click", () => {
+      this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+      this.refresh();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener("click", () => {
+      this.isMobileSidebarOpen = false;
+      this.refresh();
+    });
+  }
+}
+
   selectServer(serverId) {
     this.mode = "server";
     this.currentServerId = serverId;
     this.channelSearchResults = null;
     this.dmSearchResults = null;
+    this.isMobileSidebarOpen = false;
 
     const server = this.serverService.getServerById(serverId);
     this.currentChannelId = server?.channels[0]?.id || null;
@@ -541,8 +591,9 @@ const canSendMessages = this.roleService.hasPermission(
   selectChannel(channelId) {
     this.currentChannelId = channelId;
     this.channelSearchResults = null;
+    this.isMobileSidebarOpen = false;
     this.refresh();
-}
+  }
 
   openPinnedDirectMessagesModal() {
   const user = this.authService.getCurrentUser();
@@ -634,26 +685,24 @@ jumpToDirectMessage(messageId) {
 }
 
   openDirectMessages() {
-  const user = this.authService.getCurrentUser();
-
-  this.mode = "dm";
-  this.channelSearchResults = null;
-
-  this.notificationService.markFriendEventsAsRead(user.id);
-
-  this.refresh();
-}
+    this.mode = "dm";
+    this.channelSearchResults = null;
+    this.isMobileSidebarOpen = false;
+    this.refresh();
+  }
 
   backToServers() {
     this.mode = "server";
+    this.isMobileSidebarOpen = false;
     this.refresh();
   }
 
   selectFriend(friendId) {
     this.currentFriendId = friendId;
     this.dmSearchResults = null;
+    this.isMobileSidebarOpen = false;
     this.refresh();
-}
+  }
 
   togglePinMessage(messageId) {
   const user = this.authService.getCurrentUser();

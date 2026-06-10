@@ -63,3 +63,37 @@ img {
   background: rgba(45, 212, 191, 0.35);
   color: var(--color-text);
 }
+/* ===== Mobile base fixes ===== */
+
+html,
+body {
+  overscroll-behavior: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 950px) {
+  body {
+    overflow: hidden;
+  }
+
+  #app {
+    height: 100dvh;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  * {
+    scrollbar-width: thin;
+  }
+}
