@@ -5,20 +5,22 @@ import { ImageViewerModal } from "./ImageViewerModal.js";
 
 export class DirectMessageView extends Component {
   constructor({
-  currentUser,
-  friend,
-  messages,
-  searchResults = null,
-  userService,
-  onSendMessage,
-  onSearch,
-  onClearSearch,
-  onEditMessage,
-  onDeleteMessage,
-  onOpenUserProfile,
-  onToggleReaction,
-  onTogglePinMessage,
-  onOpenPinnedMessages
+    currentUser,
+    friend,
+    messages,
+    searchResults = null,
+    userService,
+    onSendMessage,
+    onSearch,
+    onClearSearch,
+    onEditMessage,
+    onDeleteMessage,
+    onOpenUserProfile,
+    onRemoveFriend,
+    onBlockFriend,
+    onToggleReaction,
+    onTogglePinMessage,
+    onOpenPinnedMessages
 }) {
   super();
 
@@ -34,6 +36,8 @@ export class DirectMessageView extends Component {
   this.onEditMessage = onEditMessage;
   this.onDeleteMessage = onDeleteMessage;
   this.onOpenUserProfile = onOpenUserProfile;
+  this.onRemoveFriend = onRemoveFriend;
+  this.onBlockFriend = onBlockFriend;
   this.onToggleReaction = onToggleReaction;
   this.onTogglePinMessage = onTogglePinMessage;
   this.onOpenPinnedMessages = onOpenPinnedMessages;
@@ -54,9 +58,38 @@ export class DirectMessageView extends Component {
                     ${renderAvatar(this.friend.avatar, "?")}
                   </button>
 
-                  <div>
+                  <div class="dm-header-user-info">
                     <h1>${escapeHTML(this.friend.username)}</h1>
                     <p>${escapeHTML(this.friend.status || "online")}</p>
+                  </div>
+
+                  <div class="dm-header-actions">
+                    <button
+                      class="dm-header-action"
+                      type="button"
+                      data-open-dm-profile="${this.friend.id}"
+                      title="Профиль"
+                    >
+                      👤
+                    </button>
+
+                    <button
+                      class="dm-header-action danger"
+                      type="button"
+                      data-block-dm-friend="${this.friend.id}"
+                      title="Заблокировать"
+                    >
+                      ⛔
+                    </button>
+
+                    <button
+                      class="dm-header-action danger"
+                      type="button"
+                      data-remove-dm-friend="${this.friend.id}"
+                      title="Удалить друга"
+                    >
+                      ×
+                    </button>
                   </div>
                 `
                 : `
@@ -308,6 +341,30 @@ this.element.querySelectorAll("[data-dm-image-menu]").forEach((button) => {
 
         if (userId && this.onOpenUserProfile) {
           this.onOpenUserProfile(userId);
+        }
+      });
+    });
+
+    this.element.querySelectorAll("[data-open-dm-profile]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (this.onOpenUserProfile) {
+          this.onOpenUserProfile(button.dataset.openDmProfile);
+        }
+      });
+    });
+
+    this.element.querySelectorAll("[data-block-dm-friend]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (this.onBlockFriend) {
+          this.onBlockFriend(button.dataset.blockDmFriend);
+        }
+      });
+    });
+
+    this.element.querySelectorAll("[data-remove-dm-friend]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (this.onRemoveFriend) {
+          this.onRemoveFriend(button.dataset.removeDmFriend);
         }
       });
     });
@@ -579,34 +636,34 @@ renderAttachmentPreview(input, previewElement) {
 }
 
   renderMessages() {
-    if (!this.friend) {
-      return `
-        <div class="empty-chat">
-          <div class="empty-chat-icon">👥</div>
-          <h2>Личные сообщения</h2>
-          <p>Выбери друга слева или добавь нового.</p>
-        </div>
-      `;
-    }
-
-    if (this.searchResults) {
-      return this.renderSearchResults();
-    }
-
-    if (this.messages.length === 0) {
-      return `
-        <div class="empty-chat">
-          <div class="empty-chat-icon">💌</div>
-          <h2>Диалог пустой</h2>
-          <p>Напиши первое личное сообщение.</p>
-        </div>
-      `;
-    }
-
-    return this.messages
-      .map((message) => this.renderMessage(message))
-      .join("");
+  if (!this.friend) {
+    return `
+      <div class="empty-chat dm-empty-chat">
+        <div class="empty-chat-icon">👥</div>
+        <h2>Выбери друга</h2>
+        <p>Открой диалог слева или добавь нового друга через кнопку +.</p>
+      </div>
+    `;
   }
+
+  if (this.searchResults) {
+    return this.renderSearchResults();
+  }
+
+  if (this.messages.length === 0) {
+    return `
+      <div class="empty-chat dm-empty-chat">
+        <div class="empty-chat-icon">💌</div>
+        <h2>Диалог с ${escapeHTML(this.friend.username)} пустой</h2>
+        <p>Напиши первое сообщение или прикрепи картинку.</p>
+      </div>
+    `;
+  }
+
+  return this.messages
+    .map((message) => this.renderMessage(message))
+    .join("");
+}
 
   renderSearchResults() {
     if (this.searchResults.length === 0) {

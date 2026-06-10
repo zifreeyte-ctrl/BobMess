@@ -246,6 +246,23 @@
   line-height: 1.35;
 }
 
+.dm-empty-state {
+  margin-top: 4px;
+}
+
+.dm-empty-chat {
+  max-width: 420px;
+  margin: auto;
+  padding: 28px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+
+  background:
+    linear-gradient(180deg, rgba(94, 234, 212, 0.06), transparent 70%),
+    rgba(15, 23, 42, 0.22);
+} 
+
 /* ===== Messages ===== */
 
 .message {
@@ -371,6 +388,8 @@
 }
 
 .dm-header-user {
+  min-width: 0;
+
   display: flex;
   align-items: center;
   gap: 12px;
@@ -379,6 +398,62 @@
 .dm-header-user .friend-avatar {
   width: 46px;
   height: 46px;
+  flex: 0 0 46px;
+}
+
+.dm-header-user-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dm-header-user-info h1,
+.dm-header-user-info p {
+  overflow: hidden;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-left: 8px;
+}
+
+.dm-header-action {
+  width: 36px;
+  height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--color-border);
+  border-radius: 13px;
+
+  background: var(--color-bg-card);
+  color: var(--color-muted);
+
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.dm-header-action:hover {
+  border-color: rgba(94, 234, 212, 0.45);
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--color-accent-light);
+}
+
+.dm-header-action.danger:hover {
+  border-color: rgba(251, 113, 133, 0.45);
+  background: rgba(251, 113, 133, 0.14);
+  color: #fecdd3;
 }
 
 /* ===== Direct messages sidebar ===== */
@@ -487,6 +562,58 @@
   text-overflow: ellipsis;
 }
 
+.friend-search-box {
+  position: relative;
+
+  width: 100%;
+}
+
+.friend-search-box input {
+  width: 100%;
+  height: 40px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 0 40px 0 14px;
+
+  background: var(--color-bg-input);
+  color: var(--color-text);
+
+  outline: none;
+}
+
+.friend-search-box input:focus {
+  border-color: rgba(94, 234, 212, 0.55);
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.12);
+}
+
+.friend-search-box button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+
+  width: 24px;
+  height: 24px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(148, 163, 184, 0.14);
+  color: var(--color-muted);
+
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.friend-search-box button:hover {
+  background: rgba(45, 212, 191, 0.14);
+  color: var(--color-accent-light);
+}
+
 .small-action-button {
   width: 32px;
   height: 32px;
@@ -517,10 +644,13 @@
 /* ===== Friends ===== */
 
 .friend-item {
+  position: relative;
+
   width: 100%;
+  min-width: 0;
 
   display: grid;
-  grid-template-columns: 40px 1fr auto auto auto;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
 
@@ -587,19 +717,61 @@
   transition: 0.18s ease;
 }
 
-.friend-remove {
-  font-size: 18px;
+.friend-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  opacity: 0;
+  transform: translateX(4px);
+  transition: 0.18s ease;
 }
 
-.friend-item:hover .friend-remove,
-.friend-item:hover .friend-block {
+.friend-item:hover .friend-actions,
+.friend-item.active .friend-actions {
   opacity: 1;
+  transform: translateX(0);
+}
+
+.friend-action {
+  width: 26px;
+  height: 26px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: transparent;
+  color: var(--color-muted);
+
+  font-size: 14px;
+  line-height: 1;
+
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.friend-action:hover {
+  background: rgba(45, 212, 191, 0.14);
+  color: var(--color-accent-light);
 }
 
 .friend-remove:hover,
 .friend-block:hover {
   background: rgba(251, 113, 133, 0.16);
   color: #fecdd3;
+}
+
+.friend-unread-badge {
+  position: static;
+
+  min-width: 20px;
+  height: 20px;
+
+  border-width: 0;
 }
 
 /* ===== Friend requests ===== */
@@ -643,7 +815,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-}
+} 
 
 .friend-request-small-badge {
   min-width: 18px;

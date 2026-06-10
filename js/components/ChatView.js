@@ -118,11 +118,13 @@ export class ChatView extends Component {
       onAddFriend: () => this.openAddFriendModal(),
       onRemoveFriend: (friendId) => this.openRemoveFriendModal(friendId),
       onBlockFriend: (friendId) => this.openBlockUserModal(friendId),
+      onOpenFriendProfile: (friendId) => this.openUserProfileModal(friendId),
       onBackToServers: () => this.backToServers(),
       onAcceptFriendRequest: (requestId) => this.acceptFriendRequest(requestId),
       onRejectFriendRequest: (requestId) => this.rejectFriendRequest(requestId),
       onCancelFriendRequest: (requestId) => this.cancelFriendRequest(requestId)
     });
+
     if (currentFriend) {
         this.notificationService.markDialogAsRead(currentUser.id, currentFriend.id);
     }
@@ -139,6 +141,8 @@ export class ChatView extends Component {
       onEditMessage: (messageId) => this.openEditDirectMessageModal(messageId),
       onDeleteMessage: (messageId) => this.openDeleteDirectMessageModal(messageId),
       onOpenUserProfile: (userId) => this.openUserProfileModal(userId),
+      onRemoveFriend: (friendId) => this.openRemoveFriendModal(friendId),
+      onBlockFriend: (friendId) => this.openBlockUserModal(friendId),
       onToggleReaction: (messageId, emoji) => this.toggleDirectMessageReaction(messageId, emoji),
       onTogglePinMessage: (messageId) => this.togglePinDirectMessage(messageId),
       onOpenPinnedMessages: () => this.openPinnedDirectMessagesModal(),
