@@ -57,6 +57,7 @@ export class ChatView extends Component {
     this.mode = "server";
     this.isMembersSidebarOpen = true;
     this.isMobileSidebarOpen = false;
+    this.isMobileMembersOpen = false;
     this.membersSidebar = null;
 
     this.serverList = null;
@@ -297,7 +298,7 @@ const canSendMessages = this.roleService.hasPermission(
     });
 
     this.element = this.createElement(`
-    <main class="bob-layout ${this.isMembersSidebarOpen ? "with-members" : "without-members"} ${this.isMobileSidebarOpen ? "mobile-sidebar-open" : ""}">
+    <main class="bob-layout ${this.isMembersSidebarOpen ? "with-members" : "without-members"} ${this.isMobileSidebarOpen ? "mobile-sidebar-open" : ""} ${this.isMobileMembersOpen ? "mobile-members-open" : ""}">
       <div id="serverListSlot"></div>
 
       <button
@@ -382,7 +383,13 @@ const canSendMessages = this.roleService.hasPermission(
           </form>
         </section>
 
-        ${this.isMembersSidebarOpen ? `<div id="membersSidebarSlot" class="members-sidebar-shell"></div>` : ""}
+        <div id="mobileMembersBackdrop" class="mobile-members-backdrop"></div>
+
+        ${
+          this.isMembersSidebarOpen || this.isMobileMembersOpen
+            ? `<div id="membersSidebarSlot" class="members-sidebar-shell"></div>`
+            : ""
+        }
       </main>
     `);
 
@@ -390,7 +397,7 @@ const canSendMessages = this.roleService.hasPermission(
     this.element.querySelector("#channelListSlot").replaceWith(this.channelList.render());
     this.element.querySelector("#messageListSlot").replaceWith(this.messageListComponent.render());
 
-    if (this.isMembersSidebarOpen) {
+    if (this.isMembersSidebarOpen || this.isMobileMembersOpen) {
       this.element
         .querySelector("#membersSidebarSlot")
         .replaceWith(this.membersSidebar.render());
@@ -399,166 +406,180 @@ const canSendMessages = this.roleService.hasPermission(
     return this.element;
   }
 
-  afterRender() {
-    setTimeout(() => {
-      this.handleInviteFromUrl();
-    }, 100);
+afterRender() {
+  setTimeout(() => {
+    this.handleInviteFromUrl();
+  }, 100);
 
-    this.serverList?.afterRender();
-    this.bindMobileSidebarControls();
+  this.serverList?.afterRender();
+  this.bindMobileSidebarControls();
 
-    if (this.mode === "dm") {
-      this.friendList?.afterRender();
-      this.directMessageView?.afterRender();
-      return;
-    }
+  if (this.mode === "dm") {
+    this.friendList?.afterRender();
+    this.directMessageView?.afterRender();
+    return;
+  }
 
-    if (!this.channelList) {
-      const createFirstServerButton = this.element.querySelector("#createFirstServerButton");
+  if (!this.channelList) {
+    const createFirstServerButton = this.element.querySelector("#createFirstServerButton");
 
-      if (createFirstServerButton) {
-        createFirstServerButton.addEventListener("click", () => {
-          this.openCreateServerModal();
-        });
-      }
-
-      if (!this.inviteFromUrlHandled) {
-      this.handleInviteFromUrl();
-      }
-
-      return;
-    }
-
-    this.channelList.afterRender();
-    this.messageListComponent.afterRender();
-    const pinnedMessagesButton = this.element.querySelector("#pinnedMessagesButton");
-
-    if (pinnedMessagesButton) {
-      pinnedMessagesButton.addEventListener("click", () => {
-        this.openPinnedMessagesModal();
+    if (createFirstServerButton) {
+      createFirstServerButton.addEventListener("click", () => {
+        this.openCreateServerModal();
       });
     }
 
-    if (this.isMembersSidebarOpen && this.membersSidebar) {
-      this.membersSidebar.afterRender();
+    if (!this.inviteFromUrlHandled) {
+      this.handleInviteFromUrl();
     }
 
-    this.messageForm = this.element.querySelector("#messageForm");
-    this.messageInput = this.element.querySelector("#messageInput");
-    this.messageAttachmentInput = this.element.querySelector("#messageAttachmentInput");
-    this.messageAttachmentPreview = this.element.querySelector("#messageAttachmentPreview");
-    this.messageListElement = this.element.querySelector("#messageList");
+    return;
+  }
 
-    if (this.messageAttachmentInput && this.messageAttachmentPreview) {
-      this.messageAttachmentInput.addEventListener("change", () => {
-        this.renderAttachmentPreview(
-          this.messageAttachmentInput,
-          this.messageAttachmentPreview
-        );
-      });
-    }
+  this.channelList.afterRender();
+  this.messageListComponent.afterRender();
 
-    if (this.messageAttachmentInput && this.messageAttachmentPreview) {
-  this.element.addEventListener("paste", (event) => {
-    this.handleImagePaste(
-      event,
-      this.messageAttachmentInput,
-      this.messageAttachmentPreview
-    );
-  });
-}
+  const pinnedMessagesButton = this.element.querySelector("#pinnedMessagesButton");
 
-    if (
-  this.messageListElement &&
-  this.messageAttachmentInput &&
-  this.messageAttachmentPreview
-) {
-  this.messageListElement.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    this.messageListElement.classList.add("drag-over");
-  });
+  if (pinnedMessagesButton) {
+    pinnedMessagesButton.addEventListener("click", () => {
+      this.openPinnedMessagesModal();
+    });
+  }
 
-  this.messageListElement.addEventListener("dragleave", (event) => {
-    if (!this.messageListElement.contains(event.relatedTarget)) {
+  if ((this.isMembersSidebarOpen || this.isMobileMembersOpen) && this.membersSidebar) {
+    this.membersSidebar.afterRender();
+  }
+
+  this.messageForm = this.element.querySelector("#messageForm");
+  this.messageInput = this.element.querySelector("#messageInput");
+  this.messageAttachmentInput = this.element.querySelector("#messageAttachmentInput");
+  this.messageAttachmentPreview = this.element.querySelector("#messageAttachmentPreview");
+  this.messageListElement = this.element.querySelector("#messageList");
+
+  if (this.messageAttachmentInput && this.messageAttachmentPreview) {
+    this.messageAttachmentInput.addEventListener("change", () => {
+      this.renderAttachmentPreview(
+        this.messageAttachmentInput,
+        this.messageAttachmentPreview
+      );
+    });
+  }
+
+  if (this.messageAttachmentInput && this.messageAttachmentPreview) {
+    this.element.addEventListener("paste", (event) => {
+      this.handleImagePaste(
+        event,
+        this.messageAttachmentInput,
+        this.messageAttachmentPreview
+      );
+    });
+  }
+
+  if (
+    this.messageListElement &&
+    this.messageAttachmentInput &&
+    this.messageAttachmentPreview
+  ) {
+    this.messageListElement.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      this.messageListElement.classList.add("drag-over");
+    });
+
+    this.messageListElement.addEventListener("dragleave", (event) => {
+      if (!this.messageListElement.contains(event.relatedTarget)) {
+        this.messageListElement.classList.remove("drag-over");
+      }
+    });
+
+    this.messageListElement.addEventListener("drop", (event) => {
+      event.preventDefault();
       this.messageListElement.classList.remove("drag-over");
-    }
-  });
 
-  this.messageListElement.addEventListener("drop", (event) => {
-    event.preventDefault();
-    this.messageListElement.classList.remove("drag-over");
+      const file = event.dataTransfer.files[0];
 
-    const file = event.dataTransfer.files[0];
+      if (!file) {
+        return;
+      }
 
-    if (!file) {
-      return;
-    }
+      if (!file.type.startsWith("image/")) {
+        this.messageAttachmentPreview.innerHTML = `
+          <div class="attachment-preview-error">
+            Можно перетаскивать только изображения.
+          </div>
+        `;
+        this.messageAttachmentPreview.classList.add("active");
+        return;
+      }
 
-    if (!file.type.startsWith("image/")) {
-      this.messageAttachmentPreview.innerHTML = `
-        <div class="attachment-preview-error">
-          Можно перетаскивать только изображения.
-        </div>
-      `;
-      this.messageAttachmentPreview.classList.add("active");
-      return;
-    }
+      const maxSize = 1024 * 1024 * 1.5;
 
-    const maxSize = 1024 * 1024 * 1.5;
+      if (file.size > maxSize) {
+        this.messageAttachmentPreview.innerHTML = `
+          <div class="attachment-preview-error">
+            Картинка слишком большая. Максимум 1.5 MB.
+          </div>
+        `;
+        this.messageAttachmentPreview.classList.add("active");
+        return;
+      }
 
-    if (file.size > maxSize) {
-      this.messageAttachmentPreview.innerHTML = `
-        <div class="attachment-preview-error">
-          Картинка слишком большая. Максимум 1.5 MB.
-        </div>
-      `;
-      this.messageAttachmentPreview.classList.add("active");
-      return;
-    }
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
 
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
+      this.messageAttachmentInput.files = dataTransfer.files;
 
-    this.messageAttachmentInput.files = dataTransfer.files;
+      this.renderAttachmentPreview(
+        this.messageAttachmentInput,
+        this.messageAttachmentPreview
+      );
+    });
+  }
 
-    this.renderAttachmentPreview(
-      this.messageAttachmentInput,
-      this.messageAttachmentPreview
-    );
-  });
-}
-
+  if (this.messageForm) {
     this.messageForm.addEventListener("submit", (event) => {
       this.handleSendMessage(event);
     });
-    const searchForm = this.element.querySelector("#channelSearchForm");
-    const clearSearchButton = this.element.querySelector("#channelClearSearchButton");
-
-    if (searchForm) {
-    searchForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const input = this.element.querySelector("#channelSearchInput");
-        this.searchChannelMessages(input.value);
-    });
-    }
-    const membersToggleButton = this.element.querySelector("#membersToggleButton");
-
-    if (membersToggleButton) {
-      membersToggleButton.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-
-        this.toggleMembersSidebar();
-      });
-    }
-
-    if (clearSearchButton) {
-    clearSearchButton.addEventListener("click", () => {
-        this.clearChannelSearch();
-    });
-    }
   }
+
+  const searchForm = this.element.querySelector("#channelSearchForm");
+  const clearSearchButton = this.element.querySelector("#channelClearSearchButton");
+
+  if (searchForm) {
+    searchForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const input = this.element.querySelector("#channelSearchInput");
+      this.searchChannelMessages(input.value);
+    });
+  }
+
+  if (clearSearchButton) {
+    clearSearchButton.addEventListener("click", () => {
+      this.clearChannelSearch();
+    });
+  }
+
+  const membersToggleButton = this.element.querySelector("#membersToggleButton");
+
+  if (membersToggleButton) {
+    membersToggleButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      this.toggleMembersSidebar();
+    });
+  }
+
+  const mobileMembersBackdrop = this.element.querySelector("#mobileMembersBackdrop");
+
+  if (mobileMembersBackdrop) {
+    mobileMembersBackdrop.addEventListener("click", () => {
+      this.isMobileMembersOpen = false;
+      this.refresh();
+    });
+  }
+}
 
   bindMobileSidebarControls() {
   const toggleButton = this.element.querySelector("#mobileSidebarToggle");
@@ -570,18 +591,16 @@ const canSendMessages = this.roleService.hasPermission(
       event.stopPropagation();
 
       this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+      this.isMobileMembersOpen = false;
 
-      this.element.classList.toggle(
-        "mobile-sidebar-open",
-        this.isMobileSidebarOpen
-      );
+      this.refresh();
     });
   }
 
   if (backdrop) {
     backdrop.addEventListener("click", () => {
       this.isMobileSidebarOpen = false;
-      this.element.classList.remove("mobile-sidebar-open");
+      this.refresh();
     });
   }
 }
@@ -592,6 +611,7 @@ const canSendMessages = this.roleService.hasPermission(
     this.channelSearchResults = null;
     this.dmSearchResults = null;
     this.isMobileSidebarOpen = false;
+    this.isMobileMembersOpen = false; 
 
     const server = this.serverService.getServerById(serverId);
     this.currentChannelId = server?.channels[0]?.id || null;
@@ -599,12 +619,13 @@ const canSendMessages = this.roleService.hasPermission(
     this.refresh();
   }
 
-  selectChannel(channelId) {
-    this.currentChannelId = channelId;
-    this.channelSearchResults = null;
-    this.isMobileSidebarOpen = false;
-    this.refresh();
-  }
+selectChannel(channelId) {
+  this.currentChannelId = channelId;
+  this.channelSearchResults = null;
+  this.isMobileSidebarOpen = false;
+  this.isMobileMembersOpen = false;
+  this.refresh();
+}
 
   openPinnedDirectMessagesModal() {
   const user = this.authService.getCurrentUser();
@@ -695,25 +716,28 @@ jumpToDirectMessage(messageId) {
   }
 }
 
-  openDirectMessages() {
-    this.mode = "dm";
-    this.channelSearchResults = null;
-    this.isMobileSidebarOpen = false;
-    this.refresh();
-  }
+openDirectMessages() {
+  this.mode = "dm";
+  this.channelSearchResults = null;
+  this.isMobileSidebarOpen = false;
+  this.isMobileMembersOpen = false;
+  this.refresh();
+} 
 
-  backToServers() {
-    this.mode = "server";
-    this.isMobileSidebarOpen = false;
-    this.refresh();
-  }
+backToServers() {
+  this.mode = "server";
+  this.isMobileSidebarOpen = false;
+  this.isMobileMembersOpen = false;
+  this.refresh();
+}
 
-  selectFriend(friendId) {
-    this.currentFriendId = friendId;
-    this.dmSearchResults = null;
-    this.isMobileSidebarOpen = false;
-    this.refresh();
-  }
+selectFriend(friendId) {
+  this.currentFriendId = friendId;
+  this.dmSearchResults = null;
+  this.isMobileSidebarOpen = false;
+  this.isMobileMembersOpen = false;
+  this.refresh();
+}
 
   togglePinMessage(messageId) {
   const user = this.authService.getCurrentUser();
@@ -1393,10 +1417,9 @@ toggleMembersSidebar() {
   const isMobile = window.matchMedia("(max-width: 950px)").matches;
 
   if (isMobile) {
-    this.isMembersSidebarOpen = true;
+    this.isMobileMembersOpen = !this.isMobileMembersOpen;
     this.isMobileSidebarOpen = false;
-
-    this.element.classList.toggle("mobile-members-open");
+    this.refresh();
     return;
   }
 
