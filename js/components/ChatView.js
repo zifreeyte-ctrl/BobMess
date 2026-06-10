@@ -73,15 +73,16 @@ export class ChatView extends Component {
     this.currentServerId = this.currentServerId || servers[0]?.id || null;
 
     this.serverList = new ServerList({
-        servers,
-        currentServerId: this.currentServerId,
-        mode: this.mode,
-        currentUser,
-        friends,
-        notificationService: this.notificationService,
-        onSelectServer: (serverId) => this.selectServer(serverId),
-        onCreateServer: () => this.openCreateServerModal(),
-        onOpenDirectMessages: () => this.openDirectMessages()
+      servers,
+      currentServerId: this.currentServerId,
+      mode: this.mode,
+      currentUser,
+      friends,
+      notificationService: this.notificationService,
+      friendRequestCount: this.friendService.getIncomingRequests(currentUser.id).length,
+      onSelectServer: (serverId) => this.selectServer(serverId),
+      onCreateServer: () => this.openCreateServerModal(),
+      onOpenDirectMessages: () => this.openDirectMessages()
     });
 
     if (this.mode === "dm") {
@@ -106,14 +107,20 @@ export class ChatView extends Component {
       : [];
 
     this.friendList = new FriendList({
-        friends,
-        currentUser,
-        currentFriendId: this.currentFriendId,
-        notificationService: this.notificationService,
-        onSelectFriend: (friendId) => this.selectFriend(friendId),
-        onAddFriend: () => this.openAddFriendModal(),
-        onRemoveFriend: (friendId) => this.openRemoveFriendModal(friendId),
-        onBackToServers: () => this.backToServers()
+      friends,
+      currentUser,
+      currentFriendId: this.currentFriendId,
+      notificationService: this.notificationService,
+      userService: this.userService,
+      incomingRequests: this.friendService.getIncomingRequests(currentUser.id),
+      outgoingRequests: this.friendService.getOutgoingRequests(currentUser.id),
+      onSelectFriend: (friendId) => this.selectFriend(friendId),
+      onAddFriend: () => this.openAddFriendModal(),
+      onRemoveFriend: (friendId) => this.openRemoveFriendModal(friendId),
+      onBackToServers: () => this.backToServers(),
+      onAcceptFriendRequest: (requestId) => this.acceptFriendRequest(requestId),
+      onRejectFriendRequest: (requestId) => this.rejectFriendRequest(requestId),
+      onCancelFriendRequest: (requestId) => this.cancelFriendRequest(requestId)
     });
     if (currentFriend) {
         this.notificationService.markDialogAsRead(currentUser.id, currentFriend.id);
@@ -688,36 +695,42 @@ jumpToMessage(messageId) {
 }
 
   openAddFriendModal() {
-    const modal = new Modal({
-      title: "Добавить друга",
-      confirmText: "Добавить",
-      content: `
-        <div class="form-group">
-          <label>Ник пользователя</label>
-          <input id="friendUsernameInput" type="text" placeholder="Например: Alex" />
-        </div>
-      `,
-      onConfirm: (modalElement) => {
-        const input = modalElement.querySelector("#friendUsernameInput");
-        const username = input.value.trim();
-        const user = this.authService.getCurrentUser();
+  const modal = new Modal({
+    title: "Добавить друга",
+    confirmText: "Отправить заявку",
+    content: `
+      <label class="form-field">
+        <span>Ник пользователя</span>
+        <input
+          id="friendUsernameInput"
+          type="text"
+          placeholder="Например: Bob"
+        />
+      </label>
 
-        try {
-          const friend = this.friendService.addFriendByUsername(user.id, username);
+      <p class="modal-hint">
+        Пользователь получит заявку и сможет принять или отклонить её.
+      </p>
+    `,
+    onConfirm: (modalElement) => {
+      const input = modalElement.querySelector("#friendUsernameInput");
+      const username = input.value.trim();
+      const user = this.authService.getCurrentUser();
 
-          this.currentFriendId = friend.id;
+      try {
+        this.friendService.sendFriendRequestByUsername(user.id, username);
 
-          Toast.show("Друг добавлен.");
-          modal.close();
-          this.refresh();
-        } catch (error) {
-          Toast.show(error.message, "error");
-        }
+        Toast.show("Заявка в друзья отправлена.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
       }
-    });
+    }
+  });
 
-    modal.open();
-  }
+  modal.open();
+}
 
 openCreateServerModal() {
   const modal = new Modal({
@@ -788,6 +801,49 @@ openCreateServerModal() {
   });
 
   modal.open();
+}
+
+acceptFriendRequest(requestId) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.friendService.acceptFriendRequest(requestId, user.id);
+
+    const friends = this.friendService.getFriendsForUser(user.id);
+
+    if (!this.currentFriendId && friends.length > 0) {
+      this.currentFriendId = friends[0].id;
+    }
+
+    Toast.show("Заявка принята.");
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
+}
+
+rejectFriendRequest(requestId) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.friendService.rejectFriendRequest(requestId, user.id);
+    Toast.show("Заявка отклонена.");
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
+}
+
+cancelFriendRequest(requestId) {
+  const user = this.authService.getCurrentUser();
+
+  try {
+    this.friendService.cancelFriendRequest(requestId, user.id);
+    Toast.show("Заявка отменена.");
+    this.refresh();
+  } catch (error) {
+    Toast.show(error.message, "error");
+  }
 }
 
   openRemoveFriendModal(friendId) {

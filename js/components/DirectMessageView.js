@@ -273,10 +273,32 @@ if (this.messageList && this.attachmentInput && this.attachmentPreview) {
     }
 
     const viewer = new ImageViewerModal({
-      attachment: message.attachment
+      attachment: message.attachment,
+      messageId: message.id,
+      onGoToMessage: (messageId) => this.scrollToMessage(messageId)
     });
 
     viewer.open();
+  });
+});
+
+this.element.querySelectorAll("[data-dm-image-menu]").forEach((button) => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const messageId = button.dataset.messageId;
+    const message = this.messages.find((item) => item.id === messageId);
+
+    if (!message || !message.attachment) {
+      return;
+    }
+
+    this.openImageMenu(
+      event.clientX,
+      event.clientY,
+      message
+    );
   });
 });
 
@@ -365,6 +387,65 @@ if (this.messageList && this.attachmentInput && this.attachmentPreview) {
   });
 }
   }
+
+  openAttachmentInBrowser(attachment) {
+  const tab = window.open();
+
+  if (!tab) {
+    return;
+  }
+
+  tab.document.write(`
+    <title>BobMess Image</title>
+    <body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <img
+        src="${attachment.dataUrl}"
+        style="max-width:100vw;max-height:100vh;object-fit:contain;"
+        alt="Изображение"
+      />
+    </body>
+  `);
+
+  tab.document.close();
+}
+
+async shareAttachment(attachment) {
+  if (!navigator.share) {
+    await navigator.clipboard.writeText(attachment.dataUrl);
+    return;
+  }
+
+  try {
+    await navigator.share({
+      title: "Изображение из BobMess",
+      text: "Изображение из BobMess",
+      url: attachment.dataUrl
+    });
+  } catch (error) {
+    // Пользователь мог просто закрыть окно шаринга.
+  }
+}
+
+scrollToMessage(messageId) {
+  const messageElement = this.element.querySelector(
+    `[data-dm-id="${messageId}"]`
+  );
+
+  if (!messageElement) {
+    return;
+  }
+
+  messageElement.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  messageElement.classList.add("message-highlight");
+
+  setTimeout(() => {
+    messageElement.classList.remove("message-highlight");
+  }, 1400);
+}
 
   openReactionMenu(x, y, messageId) {
     const emojis = ["👍", "❤️", "😂", "🔥", "😮", "😢", "👏", "💀"];
@@ -615,6 +696,16 @@ renderAttachmentPreview(input, previewElement) {
           data-open-dm-image
           data-message-id="${message.id}"
         />
+
+        <button
+          class="attachment-menu-button"
+          type="button"
+          data-dm-image-menu
+          data-message-id="${message.id}"
+          title="Действия с изображением"
+        >
+          ⋯
+        </button>
       </div>
     `;
   }

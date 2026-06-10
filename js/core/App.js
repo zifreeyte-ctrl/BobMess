@@ -68,6 +68,7 @@ export class App {
         messages: [],
         directMessages: [],
         friendships: [],
+        friendRequests: [],
         readState: {
             channels: {},
             dialogs: {}
@@ -109,6 +110,10 @@ export class App {
 
     if (!Array.isArray(database.friendships)) {
       database.friendships = [];
+    }
+
+    if (!Array.isArray(database.friendRequests)) {
+      database.friendRequests = [];
     }
 
     if (!database.readState) {
@@ -323,6 +328,30 @@ database.directMessages.forEach((message) => {
         friendship.userIds.length === 2
       );
     });
+
+database.friendRequests = database.friendRequests.filter((request) => {
+  return (
+    request &&
+    request.id &&
+    request.fromUserId &&
+    request.toUserId &&
+    request.status
+  );
+});
+
+database.friendRequests.forEach((request) => {
+  if (!request.createdAt) {
+    request.createdAt = new Date().toISOString();
+  }
+
+  if (!("answeredAt" in request)) {
+    request.answeredAt = null;
+  }
+
+  if (!request.status) {
+    request.status = "pending";
+  }
+});
   });
 }
 

@@ -63,12 +63,34 @@ export class MessageList extends Component {
     }
 
     const viewer = new ImageViewerModal({
-      attachment: message.attachment
+      attachment: message.attachment,
+      messageId: message.id,
+      onGoToMessage: (messageId) => this.scrollToMessage(messageId)
     });
 
     viewer.open();
   });
 });
+
+this.element.querySelectorAll("[data-image-menu]").forEach((button) => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const messageId = button.dataset.messageId;
+    const message = this.messages.find((item) => item.id === messageId);
+
+    if (!message || !message.attachment) {
+      return;
+    }
+
+    this.openImageMenu(
+      event.clientX,
+      event.clientY,
+      message
+    );
+  });
+}); 
 
     this.element.querySelectorAll("[data-message-id]").forEach((messageElement) => {
       messageElement.addEventListener("contextmenu", (event) => {
@@ -133,6 +155,107 @@ export class MessageList extends Component {
 
     this.scrollToBottom();
   }
+
+  openImageMenu(x, y, message) {
+  const attachment = message.attachment;
+
+  ContextMenu.show({
+    x,
+    y,
+    items: [
+      {
+        label: "Скачать",
+        icon: "⬇",
+        onClick: () => this.downloadAttachment(attachment)
+      },
+      {
+        label: "Открыть в браузере",
+        icon: "↗",
+        onClick: () => this.openAttachmentInBrowser(attachment)
+      },
+      {
+        label: "Поделиться",
+        icon: "⤴",
+        onClick: () => this.shareAttachment(attachment)
+      },
+      {
+        label: "Перейти к сообщению",
+        icon: "➜",
+        onClick: () => this.scrollToMessage(message.id)
+      }
+    ]
+  });
+}
+
+downloadAttachment(attachment) {
+  const link = document.createElement("a");
+
+  link.href = attachment.dataUrl;
+  link.download = attachment.name || `bobmess-image-${Date.now()}.png`;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+openAttachmentInBrowser(attachment) {
+  const tab = window.open();
+
+  if (!tab) {
+    return;
+  }
+
+  tab.document.write(`
+    <title>BobMess Image</title>
+    <body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;">
+      <img
+        src="${attachment.dataUrl}"
+        style="max-width:100vw;max-height:100vh;object-fit:contain;"
+        alt="Изображение"
+      />
+    </body>
+  `);
+
+  tab.document.close();
+}
+
+async shareAttachment(attachment) {
+  if (!navigator.share) {
+    await navigator.clipboard.writeText(attachment.dataUrl);
+    return;
+  }
+
+  try {
+    await navigator.share({
+      title: "Изображение из BobMess",
+      text: "Изображение из BobMess",
+      url: attachment.dataUrl
+    });
+  } catch (error) {
+    // Пользователь мог просто закрыть окно шаринга.
+  }
+}
+
+scrollToMessage(messageId) {
+  const messageElement = this.element.querySelector(
+    `[data-message-id="${messageId}"]`
+  );
+
+  if (!messageElement) {
+    return;
+  }
+
+  messageElement.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  messageElement.classList.add("message-highlight");
+
+  setTimeout(() => {
+    messageElement.classList.remove("message-highlight");
+  }, 1400);
+}
 
   openReactionMenu(x, y, messageId) {
     const emojis = ["👍", "❤️", "😂", "🔥", "😮", "😢", "👏", "💀"];
@@ -259,6 +382,16 @@ export class MessageList extends Component {
           data-open-image
           data-message-id="${message.id}"
         />
+
+        <button
+          class="attachment-menu-button"
+          type="button"
+          data-image-menu
+          data-message-id="${message.id}"
+          title="Действия с изображением"
+        >
+          ⋯
+        </button>
       </div>
     `;
   }

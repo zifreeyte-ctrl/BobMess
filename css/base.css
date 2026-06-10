@@ -12,6 +12,8 @@ body,
 }
 
 body {
+  overflow: hidden;
+
   font-family:
     Inter,
     system-ui,
@@ -19,17 +21,19 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
-  overflow: hidden;
+
   background:
     radial-gradient(circle at top left, rgba(20, 184, 166, 0.16), transparent 34%),
     radial-gradient(circle at bottom right, rgba(45, 212, 191, 0.14), transparent 36%),
     var(--color-bg-main);
+
   color: var(--color-text);
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -37,16 +41,25 @@ button {
   cursor: pointer;
 }
 
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
 input,
-select {
+select,
+textarea {
   outline: none;
 }
 
-::selection {
-  background: var(--color-red);
-  color: #fff;
-}
 img {
   max-width: 100%;
   display: block;
+}
+
+::selection {
+  background: rgba(45, 212, 191, 0.35);
+  color: var(--color-text);
 }

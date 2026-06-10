@@ -10,7 +10,13 @@ export class FriendList extends Component {
     onRemoveFriend,
     onBackToServers,
     currentUser,
-    notificationService
+    notificationService,
+    userService,
+    incomingRequests = [],
+    outgoingRequests = [],
+    onAcceptFriendRequest,
+    onRejectFriendRequest,
+    onCancelFriendRequest
   }) {
     super();
 
@@ -22,35 +28,49 @@ export class FriendList extends Component {
     this.onAddFriend = onAddFriend;
     this.onRemoveFriend = onRemoveFriend;
     this.onBackToServers = onBackToServers;
+
+    this.userService = userService;
+    this.incomingRequests = incomingRequests;
+    this.outgoingRequests = outgoingRequests;
+    this.onAcceptFriendRequest = onAcceptFriendRequest;
+    this.onRejectFriendRequest = onRejectFriendRequest;
+    this.onCancelFriendRequest = onCancelFriendRequest;
   }
 
   render() {
+    const requestCount = this.incomingRequests.length;
+
     this.element = this.createElement(`
-      <aside class="channel-sidebar">
-        <header class="server-header">
+      <aside class="dm-sidebar">
+        <div class="dm-sidebar-header">
           <div>
             <h2>Личные сообщения</h2>
             <span>${this.friends.length} друзей</span>
           </div>
 
-          <button id="backToServersButton" class="icon-button" title="К серверам">
+          <button class="icon-button" id="backToServersButton" title="Назад к серверам">
             ↩
           </button>
-        </header>
+        </div>
 
-        <section class="channels-section">
-          <div class="section-title">
+        <div class="dm-sidebar-section">
+          <div class="dm-section-title">
             <span>Друзья</span>
 
-            <button id="addFriendButton" title="Добавить друга">
+            ${
+              requestCount > 0
+                ? `<span class="friend-request-badge">${requestCount}</span>`
+                : ""
+            }
+
+            <button class="small-action-button" id="addFriendButton" title="Добавить друга">
               +
             </button>
           </div>
 
-          <div class="friend-list">
-            ${this.renderFriends()}
-          </div>
-        </section>
+          ${this.renderFriendRequests()}
+          ${this.renderFriends()}
+        </div>
       </aside>
     `);
 
@@ -78,14 +98,170 @@ export class FriendList extends Component {
         this.onRemoveFriend(button.dataset.removeFriend);
       });
     });
+
+    this.element.querySelectorAll("[data-accept-request]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onAcceptFriendRequest(button.dataset.acceptRequest);
+      });
+    });
+
+    this.element.querySelectorAll("[data-reject-request]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onRejectFriendRequest(button.dataset.rejectRequest);
+      });
+    });
+
+    this.element.querySelectorAll("[data-cancel-request]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onCancelFriendRequest(button.dataset.cancelRequest);
+      });
+    });
+  }
+
+  renderFriendAvatar(user) {
+  const username = user.username || "?";
+  const letter = username.charAt(0).toUpperCase();
+
+  const hasImageAvatar =
+    user.avatar &&
+    (
+      user.avatar.startsWith("data:image/") ||
+      user.avatar.startsWith("blob:") ||
+      user.avatar.startsWith("http://") ||
+      user.avatar.startsWith("https://")
+    );
+
+  if (!hasImageAvatar) {
+    return `
+      <span class="friend-avatar">
+        ${escapeHTML(letter)}
+      </span>
+    `;
+  }
+
+  return `
+    <span class="friend-avatar">
+      <img
+        src="${user.avatar}"
+        alt=""
+        onerror="this.remove(); this.parentElement.textContent='${escapeHTML(letter)}';"
+      />
+    </span>
+  `;
+}
+
+  renderFriendRequests() {
+    const hasIncoming = this.incomingRequests.length > 0;
+    const hasOutgoing = this.outgoingRequests.length > 0;
+
+    if (!hasIncoming && !hasOutgoing) {
+      return "";
+    }
+
+    return `
+      <div class="friend-requests-block">
+        ${hasIncoming ? this.renderIncomingRequests() : ""}
+        ${hasOutgoing ? this.renderOutgoingRequests() : ""}
+      </div>
+    `;
+  }
+
+  renderIncomingRequests() {
+    return `
+      <div class="friend-request-group">
+        <div class="friend-request-title">Входящие заявки</div>
+
+        ${this.incomingRequests
+          .map((request) => {
+            const user = this.userService.getUserById(request.fromUserId);
+
+            if (!user) {
+              return "";
+            }
+
+            return `
+              <div class="friend-request-card">
+                ${this.renderFriendAvatar(user)}
+
+                <div class="friend-request-info">
+                  <strong>${escapeHTML(user.username)}</strong>
+                  <span>Хочет добавить тебя в друзья</span>
+                </div>
+
+                <div class="friend-request-actions">
+                  <button
+                    class="friend-request-accept"
+                    type="button"
+                    data-accept-request="${request.id}"
+                    title="Принять"
+                  >
+                    ✓
+                  </button>
+
+                  <button
+                    class="friend-request-reject"
+                    type="button"
+                    data-reject-request="${request.id}"
+                    title="Отклонить"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
+  }
+
+  renderOutgoingRequests() {
+    return `
+      <div class="friend-request-group">
+        <div class="friend-request-title">Исходящие заявки</div>
+
+        ${this.outgoingRequests
+          .map((request) => {
+            const user = this.userService.getUserById(request.toUserId);
+
+            if (!user) {
+              return "";
+            }
+
+            return `
+              <div class="friend-request-card outgoing">
+                ${this.renderFriendAvatar(user)}
+
+                <div class="friend-request-info">
+                  <strong>${escapeHTML(user.username)}</strong>
+                  <span>Заявка отправлена</span>
+                </div>
+
+                <button
+                  class="friend-request-cancel"
+                  type="button"
+                  data-cancel-request="${request.id}"
+                  title="Отменить заявку"
+                >
+                  Отмена
+                </button>
+              </div>
+            `;
+          })
+          .join("")}
+      </div>
+    `;
   }
 
   renderFriends() {
     if (this.friends.length === 0) {
       return `
-        <div class="friends-empty">
+        <div class="empty-state">
           <p>Пока друзей нет.</p>
-          <span>Добавь друга по нику.</span>
+          <span>Отправь заявку по нику.</span>
         </div>
       `;
     }
@@ -93,33 +269,32 @@ export class FriendList extends Component {
     return this.friends
       .map((friend) => {
         const isActive = friend.id === this.currentFriendId ? "active" : "";
+
         const unreadCount = this.notificationService.getUnreadDialogCount(
-        this.currentUser.id,
-        friend.id
+          this.currentUser.id,
+          friend.id
         );
 
         return `
-  <div class="friend-row ${isActive}" data-friend-id="${friend.id}">
-    <button class="friend-button">
-      <div class="friend-avatar">${renderAvatar(friend.avatar, "?")}</div>
+          <button class="friend-item ${isActive}" data-friend-id="${friend.id}">
+            ${this.renderFriendAvatar(friend)}
 
-      <div class="friend-info">
-        <strong>${escapeHTML(friend.username)}</strong>
-        <span>${escapeHTML(friend.status || "online")}</span>
-      </div>
+            <span class="friend-info">
+              <strong>${escapeHTML(friend.username)}</strong>
+              <small>${escapeHTML(friend.status || "online")}</small>
+            </span>
 
-      ${unreadCount > 0 ? `<span class="friend-unread-badge">${unreadCount}</span>` : ""}
-    </button>
+            ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ""}
 
-    <button 
-      class="friend-remove-button" 
-      data-remove-friend="${friend.id}"
-      title="Удалить друга"
-    >
-      ×
-    </button>
-  </div>
-`;
+            <span
+              class="friend-remove"
+              data-remove-friend="${friend.id}"
+              title="Удалить друга"
+            >
+              ×
+            </span>
+          </button>
+        `;
       })
       .join("");
   }

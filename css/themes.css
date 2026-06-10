@@ -6,9 +6,13 @@ body[data-theme="dark"] {
   --color-bg-card: #0d292b;
   --color-bg-input: #123336;
 
-  --color-red: #14b8a6;
-  --color-red-dark: #0f766e;
-  --color-red-light: #5eead4;
+  --color-accent: #14b8a6;
+  --color-accent-dark: #0f766e;
+  --color-accent-light: #5eead4;
+
+  --color-red: var(--color-accent);
+  --color-red-dark: var(--color-accent-dark);
+  --color-red-light: var(--color-accent-light);
 
   --color-text: #ecfeff;
   --color-muted: #8bbfc2;
@@ -25,9 +29,13 @@ body[data-theme="light"] {
   --color-bg-card: #ffffff;
   --color-bg-input: #f2fffc;
 
-  --color-red: #14b8a6;
-  --color-red-dark: #0d9488;
-  --color-red-light: #2dd4bf;
+  --color-accent: #14b8a6;
+  --color-accent-dark: #0d9488;
+  --color-accent-light: #2dd4bf;
+
+  --color-red: var(--color-accent);
+  --color-red-dark: var(--color-accent-dark);
+  --color-red-light: var(--color-accent-light);
 
   --color-text: #073b3a;
   --color-muted: #5f8d8a;

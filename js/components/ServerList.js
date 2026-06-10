@@ -9,6 +9,7 @@ export class ServerList extends Component {
     currentUser,
     friends,
     notificationService,
+    friendRequestCount = 0,
     onSelectServer,
     onCreateServer,
     onOpenDirectMessages
@@ -21,6 +22,7 @@ export class ServerList extends Component {
     this.currentUser = currentUser;
     this.friends = friends || [];
     this.notificationService = notificationService;
+    this.friendRequestCount = friendRequestCount;
 
     this.onSelectServer = onSelectServer;
     this.onCreateServer = onCreateServer;
@@ -32,16 +34,21 @@ export class ServerList extends Component {
       this.currentUser.id,
       this.friends
     );
+    const totalDmBadge = totalDmUnread + this.friendRequestCount;
 
     this.element = this.createElement(`
       <aside class="server-bar">
-        <button 
-          class="server-item dm-server-button ${this.mode === "dm" ? "active" : ""}" 
+        <button
+          class="server-item dm-server-button ${this.mode === "dm" ? "active" : ""}"
           id="directMessagesButton"
           title="Личные сообщения"
         >
           💬
-          ${totalDmUnread > 0 ? `<span class="unread-badge">${totalDmUnread}</span>` : ""}
+          ${
+            totalDmBadge > 0
+              ? `<span class="unread-badge">${totalDmBadge}</span>`
+              : ""
+          }
         </button>
 
         <div class="server-divider"></div>
