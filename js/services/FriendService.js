@@ -13,6 +13,49 @@ export class FriendService {
     return this.storage.get("friendRequests") || [];
   }
 
+  getBlockedUsers() {
+    return this.storage.get("blockedUsers") || [];
+  }
+
+  getBlockedUsersForUser(userId) {
+    const users = this.storage.get("users") || [];
+    const blockedRecords = this.getBlockedUsers().filter((record) => {
+      return record.blockerId === userId;
+    });
+
+    return blockedRecords
+      .map((record) => {
+        const user = users.find((item) => item.id === record.blockedUserId);
+
+        if (!user) {
+          return null;
+        }
+
+        return {
+          ...user,
+          blockId: record.id,
+          blockedAt: record.createdAt
+        };
+      })
+      .filter(Boolean);
+  }
+
+  isUserBlockedBy(blockerId, blockedUserId) {
+    return this.getBlockedUsers().some((record) => {
+      return (
+        record.blockerId === blockerId &&
+        record.blockedUserId === blockedUserId
+      );
+    });
+  }
+
+  isBlockedBetween(firstUserId, secondUserId) {
+    return (
+      this.isUserBlockedBy(firstUserId, secondUserId) ||
+      this.isUserBlockedBy(secondUserId, firstUserId)
+    );
+  }
+
   getFriendsForUser(userId) {
     const users = this.storage.get("users") || [];
     const friendships = this.getFriendships();
@@ -75,6 +118,14 @@ export class FriendService {
       throw new Error("Нельзя отправить заявку самому себе.");
     }
 
+    if (this.isUserBlockedBy(currentUserId, targetUser.id)) {
+      throw new Error("Ты заблокировал этого пользователя. Сначала разблокируй его в профиле.");
+    }
+
+    if (this.isUserBlockedBy(targetUser.id, currentUserId)) {
+      throw new Error("Нельзя отправить заявку этому пользователю.");
+    }
+
     if (this.areFriends(currentUserId, targetUser.id)) {
       throw new Error("Этот пользователь уже у тебя в друзьях.");
     }
@@ -89,7 +140,12 @@ export class FriendService {
         throw new Error("Ты уже отправил заявку этому пользователю.");
       }
 
-      throw new Error("Этот пользователь уже отправил тебе заявку. Прими её во входящих.");
+      this.acceptFriendRequest(existingRequest.id, currentUserId);
+
+      return {
+        ...existingRequest,
+        status: "accepted"
+      };
     }
 
     const request = {
@@ -126,6 +182,10 @@ export class FriendService {
 
     if (request.status !== "pending") {
       throw new Error("Эта заявка уже обработана.");
+    }
+
+    if (this.isBlockedBetween(request.fromUserId, request.toUserId)) {
+      throw new Error("Нельзя принять заявку: между пользователями есть блокировка.");
     }
 
     this.storage.update((database) => {
@@ -233,6 +293,74 @@ export class FriendService {
           message.userIds.includes(friendId);
 
         return !isDialogMessage;
+      });
+    });
+  }
+
+  blockUser(currentUserId, targetUserId) {
+    if (currentUserId === targetUserId) {
+      throw new Error("Нельзя заблокировать самого себя.");
+    }
+
+    const users = this.storage.get("users") || [];
+    const targetUser = users.find((user) => user.id === targetUserId);
+
+    if (!targetUser) {
+      throw new Error("Пользователь не найден.");
+    }
+
+    if (this.isUserBlockedBy(currentUserId, targetUserId)) {
+      throw new Error("Пользователь уже заблокирован.");
+    }
+
+    const blockRecord = {
+      id: generateId("blocked_user"),
+      blockerId: currentUserId,
+      blockedUserId: targetUserId,
+      createdAt: getCurrentDate()
+    };
+
+    this.storage.update((database) => {
+      if (!Array.isArray(database.blockedUsers)) {
+        database.blockedUsers = [];
+      }
+
+      database.blockedUsers.push(blockRecord);
+
+      database.friendships = (database.friendships || []).filter((friendship) => {
+        return !(
+          friendship.userIds.includes(currentUserId) &&
+          friendship.userIds.includes(targetUserId)
+        );
+      });
+
+      database.friendRequests = (database.friendRequests || []).map((request) => {
+        const isBetweenUsers =
+          (request.fromUserId === currentUserId && request.toUserId === targetUserId) ||
+          (request.fromUserId === targetUserId && request.toUserId === currentUserId);
+
+        if (!isBetweenUsers || request.status !== "pending") {
+          return request;
+        }
+
+        return {
+          ...request,
+          status: "cancelled",
+          answeredAt: getCurrentDate()
+        };
+      });
+    });
+
+    return blockRecord;
+  }
+
+  unblockUser(currentUserId, targetUserId) {
+    this.storage.update((database) => {
+      database.blockedUsers = (database.blockedUsers || []).filter((record) => {
+        return !(
+          record.blockerId === currentUserId &&
+          record.blockedUserId === targetUserId
+        );
       });
     });
   }

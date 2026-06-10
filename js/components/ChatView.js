@@ -117,6 +117,7 @@ export class ChatView extends Component {
       onSelectFriend: (friendId) => this.selectFriend(friendId),
       onAddFriend: () => this.openAddFriendModal(),
       onRemoveFriend: (friendId) => this.openRemoveFriendModal(friendId),
+      onBlockFriend: (friendId) => this.openBlockUserModal(friendId),
       onBackToServers: () => this.backToServers(),
       onAcceptFriendRequest: (requestId) => this.acceptFriendRequest(requestId),
       onRejectFriendRequest: (requestId) => this.rejectFriendRequest(requestId),
@@ -844,6 +845,44 @@ cancelFriendRequest(requestId) {
   } catch (error) {
     Toast.show(error.message, "error");
   }
+}
+
+openBlockUserModal(friendId) {
+  const friend = this.userService.getUserById(friendId);
+
+  if (!friend) return;
+
+  const modal = new Modal({
+    title: "Заблокировать пользователя",
+    confirmText: "Заблокировать",
+    content: `
+      <div class="confirm-box">
+        <h3>Заблокировать ${escapeHTML(friend.username)}?</h3>
+        <p>
+          Пользователь будет удалён из друзей, все заявки между вами отменятся,
+          а личные сообщения между вами будут заблокированы.
+        </p>
+      </div>
+    `,
+    onConfirm: () => {
+      const user = this.authService.getCurrentUser();
+
+      try {
+        this.friendService.blockUser(user.id, friendId);
+
+        const friends = this.friendService.getFriendsForUser(user.id);
+        this.currentFriendId = friends[0]?.id || null;
+
+        Toast.show("Пользователь заблокирован.");
+        modal.close();
+        this.refresh();
+      } catch (error) {
+        Toast.show(error.message, "error");
+      }
+    }
+  });
+
+  modal.open();
 }
 
   openRemoveFriendModal(friendId) {
@@ -1839,6 +1878,7 @@ clearDirectMessageSearch() {
     const profileModal = new ProfileModal({
       user,
       userService: this.userService,
+      friendService: this.friendService,
       onUpdate: () => {
         this.refresh();
       },

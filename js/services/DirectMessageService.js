@@ -1,8 +1,9 @@
 import { generateId, getCurrentDate } from "../utils/helpers.js";
 
 export class DirectMessageService {
-  constructor(storage) {
+  constructor(storage, friendService = null) {
     this.storage = storage;
+    this.friendService = friendService;
   }
 
   getDialogMessages(userId, friendId) {
@@ -75,6 +76,10 @@ getPinnedMessages(userId, friendId) {
 
   sendMessage(fromUserId, toUserId, text, attachment = null) {
   const cleanText = text.trim();
+
+  if (this.friendService?.isBlockedBetween(fromUserId, toUserId)) {
+    throw new Error("Нельзя отправить сообщение: между пользователями есть блокировка.");
+  }
 
   if (!cleanText && !attachment) {
     throw new Error("Сообщение не может быть пустым.");

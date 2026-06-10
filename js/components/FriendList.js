@@ -8,6 +8,7 @@ export class FriendList extends Component {
     onSelectFriend,
     onAddFriend,
     onRemoveFriend,
+    onBlockFriend,
     onBackToServers,
     currentUser,
     notificationService,
@@ -27,6 +28,7 @@ export class FriendList extends Component {
     this.onSelectFriend = onSelectFriend;
     this.onAddFriend = onAddFriend;
     this.onRemoveFriend = onRemoveFriend;
+    this.onBlockFriend = onBlockFriend;
     this.onBackToServers = onBackToServers;
 
     this.userService = userService;
@@ -96,6 +98,13 @@ export class FriendList extends Component {
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         this.onRemoveFriend(button.dataset.removeFriend);
+      });
+    });
+
+    this.element.querySelectorAll("[data-block-friend]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        this.onBlockFriend(button.dataset.blockFriend);
       });
     });
 
@@ -285,6 +294,14 @@ export class FriendList extends Component {
             </span>
 
             ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ""}
+
+            <span
+              class="friend-block"
+              data-block-friend="${friend.id}"
+              title="Заблокировать"
+            >
+              ⛔
+            </span>
 
             <span
               class="friend-remove"

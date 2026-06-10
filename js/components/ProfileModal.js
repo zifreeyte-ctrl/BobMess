@@ -3,12 +3,54 @@ import { Toast } from "./Toast.js";
 import { escapeHTML, renderAvatar, readFileAsDataUrl } from "../utils/helpers.js";
 
 export class ProfileModal {
-  constructor({ user, userService, onUpdate, onOpenDevTools }) {
+  constructor({ user, userService, friendService, onUpdate, onOpenDevTools }) {
     this.user = user;
     this.onOpenDevTools = onOpenDevTools;
     this.userService = userService;
+    this.friendService = friendService;
     this.onUpdate = onUpdate;
   }
+
+  renderBlockedUsers() {
+  if (!this.friendService) {
+    return "";
+  }
+
+  const blockedUsers = this.friendService.getBlockedUsersForUser(this.user.id);
+
+  if (blockedUsers.length === 0) {
+    return `
+      <div class="blocked-empty-state">
+        Заблокированных пользователей нет.
+      </div>
+    `;
+  }
+
+  return blockedUsers
+    .map((blockedUser) => {
+      return `
+        <div class="blocked-user-card">
+          <div class="blocked-user-avatar">
+            ${renderAvatar(blockedUser.avatar, "?")}
+          </div>
+
+          <div class="blocked-user-info">
+            <strong>${escapeHTML(blockedUser.username)}</strong>
+            <span>${escapeHTML(blockedUser.status || "offline")}</span>
+          </div>
+
+          <button
+            class="settings-action unblock-action"
+            type="button"
+            data-unblock-user="${blockedUser.id}"
+          >
+            Разблокировать
+          </button>
+        </div>
+      `;
+    })
+    .join("");
+}
 
   open() {
     const modal = new Modal({
@@ -67,6 +109,13 @@ export class ProfileModal {
           </div>
 
           <div class="profile-password-box">
+            <h3>Заблокированные пользователи</h3>
+            <div class="blocked-users-list">
+              ${this.renderBlockedUsers()}
+            </div>
+          </div>
+
+          <div class="profile-password-box">
             <h3>Разработка</h3>
 
             <button class="settings-action" id="openDevToolsButton" type="button">
@@ -119,6 +168,23 @@ export class ProfileModal {
     });
 
     modal.open();
+
+    modal.element.querySelectorAll("[data-unblock-user]").forEach((button) => {
+      button.addEventListener("click", () => {
+        try {
+          this.friendService.unblockUser(this.user.id, button.dataset.unblockUser);
+
+          Toast.show("Пользователь разблокирован.");
+          modal.close();
+
+          if (this.onUpdate) {
+            this.onUpdate();
+          }
+        } catch (error) {
+          Toast.show(error.message, "error");
+        }
+      });
+    });
 
     const devToolsButton = modal.element.querySelector("#openDevToolsButton");
 

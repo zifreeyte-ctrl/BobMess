@@ -27,7 +27,7 @@ export class App {
     this.authService = new AuthService(this.storage);
     this.userService = new UserService(this.storage);
     this.friendService = new FriendService(this.storage);
-    this.directMessageService = new DirectMessageService(this.storage);
+    this.directMessageService = new DirectMessageService(this.storage, this.friendService);
     this.notificationService = new NotificationService(this.storage);
     this.roleService = new RoleService(this.storage);
     this.inviteLinkService = new InviteLinkService();
@@ -69,6 +69,7 @@ export class App {
         directMessages: [],
         friendships: [],
         friendRequests: [],
+        blockedUsers: [], 
         readState: {
             channels: {},
             dialogs: {}
@@ -114,6 +115,10 @@ export class App {
 
     if (!Array.isArray(database.friendRequests)) {
       database.friendRequests = [];
+    }
+
+    if (!Array.isArray(database.blockedUsers)) {
+      database.blockedUsers = [];
     }
 
     if (!database.readState) {
@@ -352,7 +357,23 @@ database.friendRequests.forEach((request) => {
     request.status = "pending";
   }
 });
-  });
+
+database.blockedUsers = database.blockedUsers.filter((record) => {
+  return (
+    record &&
+    record.id &&
+    record.blockerId &&
+    record.blockedUserId &&
+    record.blockerId !== record.blockedUserId
+  );
+});
+
+database.blockedUsers.forEach((record) => {
+  if (!record.createdAt) {
+    record.createdAt = new Date().toISOString();
+  }
+});
+});
 }
 
   registerEvents() {
