@@ -1,5 +1,5 @@
 import { Component } from "./Component.js";
-import { escapeHTML, renderAvatar } from "../utils/helpers.js"; 
+import { escapeHTML, renderAvatar } from "../utils/helpers.js";
 
 export class ServerList extends Component {
   constructor({
@@ -30,11 +30,10 @@ export class ServerList extends Component {
   }
 
   render() {
-    const totalDmUnread = this.notificationService.getTotalUnreadDialogsCount(
+    const totalDmBadge = this.notificationService.getDirectMessagesBadgeCount(
       this.currentUser.id,
       this.friends
     );
-    const totalDmBadge = totalDmUnread + this.friendRequestCount;
 
     this.element = this.createElement(`
       <aside class="server-bar">
@@ -104,7 +103,12 @@ export class ServerList extends Component {
             title="${escapeHTML(server.name)}"
           >
             ${renderAvatar(server.icon, "S")}
-            ${unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : ""}
+
+            ${
+              unreadCount > 0
+                ? `<span class="unread-badge">${unreadCount}</span>`
+                : ""
+            }
           </button>
         `;
       })

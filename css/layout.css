@@ -92,6 +92,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: inherit;
 }
 
 .create-server-button {
@@ -454,25 +455,28 @@
 
 .unread-badge {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  right: -6px;
+  bottom: -6px;
+  z-index: 5;
 
   min-width: 20px;
   height: 20px;
-  padding: 0 5px;
+  padding: 0 6px;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  border: 3px solid var(--color-bg-server);
+  border: 3px solid var(--color-bg-main);
   border-radius: 999px;
 
   background: var(--color-accent);
-  color: #022c2a;
+  color: #042f2e;
 
   font-size: 11px;
   font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .channel-unread-badge,

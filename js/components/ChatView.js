@@ -596,11 +596,20 @@ jumpToDirectMessage(messageId) {
 
     const attachment = await this.prepareImageAttachment(file);
 
-    this.chatService.sendMessage(
+    const message = this.chatService.sendMessage(
       this.currentChannelId,
       currentUser.id,
       text,
       attachment
+    );
+
+    const currentServer = this.serverService.getServerById(this.currentServerId);
+
+    this.notificationService.createChannelMessageNotifications(
+      currentServer,
+      this.currentChannelId,
+      message.id,
+      currentUser.id
     );
 
     input.value = "";
@@ -621,9 +630,14 @@ jumpToDirectMessage(messageId) {
 }
 
   openDirectMessages() {
-    this.mode = "dm";
-    this.channelSearchResults = null;
-    this.refresh();
+  const user = this.authService.getCurrentUser();
+
+  this.mode = "dm";
+  this.channelSearchResults = null;
+
+  this.notificationService.markFriendEventsAsRead(user.id);
+
+  this.refresh();
 }
 
   backToServers() {
@@ -719,7 +733,15 @@ jumpToMessage(messageId) {
       const user = this.authService.getCurrentUser();
 
       try {
-        this.friendService.sendFriendRequestByUsername(user.id, username);
+        const request = this.friendService.sendFriendRequestByUsername(user.id, username);
+
+        if (request?.toUserId && request?.status === "pending") {
+          this.notificationService.createFriendRequestNotification(
+            request.fromUserId,
+            request.toUserId,
+            request.id
+          );
+        }
 
         Toast.show("Заявка в друзья отправлена.");
         modal.close();
@@ -806,9 +828,20 @@ openCreateServerModal() {
 
 acceptFriendRequest(requestId) {
   const user = this.authService.getCurrentUser();
+  const request = this.friendService
+    .getFriendRequests()
+    .find((item) => item.id === requestId);
 
   try {
     this.friendService.acceptFriendRequest(requestId, user.id);
+
+    if (request) {
+      this.notificationService.createFriendRequestAcceptedNotification(
+        user.id,
+        request.fromUserId,
+        request.id
+      );
+    }
 
     const friends = this.friendService.getFriendsForUser(user.id);
 
@@ -926,11 +959,17 @@ async sendDirectMessage(text, file = null) {
   try {
     const attachment = await this.prepareImageAttachment(file);
 
-    this.directMessageService.sendMessage(
+    const message = this.directMessageService.sendMessage(
       user.id,
       this.currentFriendId,
       text,
       attachment
+    );
+
+    this.notificationService.createDirectMessageNotification(
+      user.id,
+      this.currentFriendId,
+      message.id
     );
 
     this.refresh();

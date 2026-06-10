@@ -69,7 +69,8 @@ export class App {
         directMessages: [],
         friendships: [],
         friendRequests: [],
-        blockedUsers: [], 
+        blockedUsers: [],
+        notifications: [], 
         readState: {
             channels: {},
             dialogs: {}
@@ -115,6 +116,10 @@ export class App {
 
     if (!Array.isArray(database.friendRequests)) {
       database.friendRequests = [];
+    }
+
+    if (!Array.isArray(database.notifications)) {
+      database.notifications = [];
     }
 
     if (!Array.isArray(database.blockedUsers)) {
@@ -373,6 +378,42 @@ database.blockedUsers.forEach((record) => {
     record.createdAt = new Date().toISOString();
   }
 });
+
+database.notifications = database.notifications.filter((notification) => {
+  return (
+    notification &&
+    notification.id &&
+    notification.userId &&
+    notification.type
+  );
+});
+
+database.notifications.forEach((notification) => {
+  if (!notification.createdAt) {
+    notification.createdAt = new Date().toISOString();
+  }
+
+  if (!("readAt" in notification)) {
+    notification.readAt = null;
+  }
+
+  if (!("sourceUserId" in notification)) {
+    notification.sourceUserId = null;
+  }
+
+  if (!("serverId" in notification)) {
+    notification.serverId = null;
+  }
+
+  if (!("channelId" in notification)) {
+    notification.channelId = null;
+  }
+
+  if (!("entityId" in notification)) {
+    notification.entityId = null;
+  }
+});
+
 });
 }
 

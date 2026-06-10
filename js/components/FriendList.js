@@ -40,7 +40,12 @@ export class FriendList extends Component {
   }
 
   render() {
-    const requestCount = this.incomingRequests.length;
+    const incomingRequestCount = this.incomingRequests.length;
+    const outgoingRequestCount = this.outgoingRequests.length;
+    const friendEventCount = this.notificationService.getUnreadFriendEventCount(
+      this.currentUser.id
+    );
+    const totalRequestBadge = incomingRequestCount + friendEventCount;
 
     this.element = this.createElement(`
       <aside class="dm-sidebar">
@@ -60,10 +65,10 @@ export class FriendList extends Component {
             <span>Друзья</span>
 
             ${
-              requestCount > 0
-                ? `<span class="friend-request-badge">${requestCount}</span>`
-                : ""
-            }
+                totalRequestBadge > 0
+                  ? `<span class="friend-request-badge">${totalRequestBadge}</span>`
+                  : ""
+              }
 
             <button class="small-action-button" id="addFriendButton" title="Добавить друга">
               +
@@ -181,7 +186,14 @@ export class FriendList extends Component {
   renderIncomingRequests() {
     return `
       <div class="friend-request-group">
-        <div class="friend-request-title">Входящие заявки</div>
+        <div class="friend-request-title">
+          <span>Входящие заявки</span>
+          ${
+            this.incomingRequests.length > 0
+              ? `<span class="friend-request-small-badge">${this.incomingRequests.length}</span>`
+              : ""
+          }
+        </div>
 
         ${this.incomingRequests
           .map((request) => {
@@ -230,7 +242,14 @@ export class FriendList extends Component {
   renderOutgoingRequests() {
     return `
       <div class="friend-request-group">
-        <div class="friend-request-title">Исходящие заявки</div>
+        <div class="friend-request-title">
+          <span>Исходящие заявки</span>
+          ${
+            this.outgoingRequests.length > 0
+              ? `<span class="friend-request-small-badge muted">${this.outgoingRequests.length}</span>`
+              : ""
+          }
+        </div>  
 
         ${this.outgoingRequests
           .map((request) => {
