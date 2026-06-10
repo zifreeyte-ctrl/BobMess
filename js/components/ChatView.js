@@ -382,7 +382,7 @@ const canSendMessages = this.roleService.hasPermission(
           </form>
         </section>
 
-        ${this.isMembersSidebarOpen ? `<div id="membersSidebarSlot"></div>` : ""}
+        ${this.isMembersSidebarOpen ? `<div id="membersSidebarSlot" class="members-sidebar-shell"></div>` : ""}
       </main>
     `);
 
@@ -545,7 +545,10 @@ const canSendMessages = this.roleService.hasPermission(
     const membersToggleButton = this.element.querySelector("#membersToggleButton");
 
     if (membersToggleButton) {
-      membersToggleButton.addEventListener("click", () => {
+      membersToggleButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
         this.toggleMembersSidebar();
       });
     }
@@ -1387,6 +1390,16 @@ async prepareImageAttachment(file) {
 }
 
 toggleMembersSidebar() {
+  const isMobile = window.matchMedia("(max-width: 950px)").matches;
+
+  if (isMobile) {
+    this.isMembersSidebarOpen = true;
+    this.isMobileSidebarOpen = false;
+
+    this.element.classList.toggle("mobile-members-open");
+    return;
+  }
+
   this.isMembersSidebarOpen = !this.isMembersSidebarOpen;
   this.refresh();
 }
