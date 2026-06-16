@@ -3,18 +3,23 @@ export class ThemeService {
     this.storage = storage;
   }
 
-  applySavedTheme() {
-    const settings = this.storage.get("settings");
-
-    document.body.dataset.theme = settings.theme;
+  getTheme() {
+    const settings = this.storage.get("settings") || {};
+    return settings.theme === "light" ? "light" : "dark";
   }
 
-  toggleTheme() {
-    const settings = this.storage.get("settings");
+  applySavedTheme() {
+    document.body.dataset.theme = this.getTheme();
+  }
 
-    const nextTheme = settings.theme === "dark" ? "light" : "dark";
+  setTheme(theme) {
+    const nextTheme = theme === "light" ? "light" : "dark";
 
     this.storage.update((database) => {
+      if (!database.settings) {
+        database.settings = {};
+      }
+
       database.settings.theme = nextTheme;
     });
 
@@ -23,7 +28,8 @@ export class ThemeService {
     return nextTheme;
   }
 
-  getTheme() {
-    return this.storage.get("settings").theme;
+  toggleTheme() {
+    const nextTheme = this.getTheme() === "dark" ? "light" : "dark";
+    return this.setTheme(nextTheme);
   }
 }

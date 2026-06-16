@@ -151,6 +151,10 @@ export class App {
       database.settings.theme = "dark";
     }
 
+    if (!["dark", "light"].includes(database.settings.theme)) {
+      database.settings.theme = "dark";
+    }
+
     database.users.forEach((user) => {
       if (!user.id) {
         user.id = `user_${Date.now()}_${Math.random().toString(16).slice(2)}`;
@@ -412,7 +416,7 @@ database.notifications.forEach((notification) => {
   if (!("entityId" in notification)) {
     notification.entityId = null;
   }
-});
+}); 
 
 });
 }

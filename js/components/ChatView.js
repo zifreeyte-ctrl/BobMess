@@ -2013,27 +2013,70 @@ clearDirectMessageSearch() {
 }
 
   openProfileModal() {
-    const user = this.authService.getCurrentUser();
+  const user = this.authService.getCurrentUser();
 
-    const profileModal = new ProfileModal({
-      user,
-      userService: this.userService,
-      friendService: this.friendService,
-      onUpdate: () => {
-        this.refresh();
-      },
-      onOpenDevTools: () => {
-        this.openDevToolsModal();
-      }
-    });
+  const profileModal = new ProfileModal({
+    user,
+    userService: this.userService,
+    friendService: this.friendService,
+    themeService: this.themeService,
+    onUpdate: () => {
+      this.refresh();
+    },
+    onOpenDevTools: () => {
+      this.openDevToolsModal();
+    },
+    onLogout: () => {
+      this.logout();
+    },
+    onClearData: () => {
+      this.resetApplicationData();
+    }
+  });
 
-    profileModal.open();
-  }
+  profileModal.open();
+}
 
   logout() {
     this.authService.logout();
     this.eventBus.emit("auth:logout");
   }
+
+  resetApplicationData() {
+  this.storage.save({
+    users: [],
+    currentUserId: null,
+    servers: [],
+    messages: [],
+    directMessages: [],
+    friendships: [],
+    friendRequests: [],
+    blockedUsers: [],
+    notifications: [],
+    readState: {
+      channels: {},
+      dialogs: {}
+    },
+    settings: {
+      theme: "dark"
+    }
+  });
+
+  this.currentServerId = null;
+  this.currentChannelId = null;
+  this.currentFriendId = null;
+  this.channelSearchResults = null;
+  this.dmSearchResults = null;
+  this.mode = "server";
+  this.isMembersSidebarOpen = true;
+  this.isMobileSidebarOpen = false;
+  this.isMobileMembersOpen = false;
+
+  this.themeService.applySavedTheme();
+
+  Toast.show("Все данные BobMess очищены.");
+  this.eventBus.emit("auth:logout");
+}
 
   getCurrentChannel() {
   const server = this.serverService.getServerById(this.currentServerId);

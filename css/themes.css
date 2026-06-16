@@ -139,3 +139,52 @@ body[data-theme="light"] .mobile-sidebar-backdrop,
 body[data-theme="light"] .mobile-members-backdrop {
   background: rgba(15, 23, 42, 0.28);
 }
+/* ===== Full light theme override for settings ===== */
+
+body[data-theme="light"] .modal {
+  background:
+    linear-gradient(180deg, rgba(45, 212, 191, 0.08), transparent 45%),
+    #f8fffd;
+
+  color: var(--color-text);
+}
+
+body[data-theme="light"] .settings-profile-card,
+body[data-theme="light"] .settings-section,
+body[data-theme="light"] .settings-theme-card,
+body[data-theme="light"] .blocked-user-card,
+body[data-theme="light"] .blocked-empty-state {
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .modal-content input,
+body[data-theme="light"] .modal-content textarea,
+body[data-theme="light"] .modal-content select {
+  background: #ffffff;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .modal-content input::placeholder,
+body[data-theme="light"] .modal-content textarea::placeholder {
+  color: #789995;
+}
+
+body[data-theme="light"] .settings-action {
+  background: #ffffff;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+body[data-theme="light"] .settings-action:hover {
+  background: rgba(45, 212, 191, 0.12);
+  color: var(--color-accent-dark);
+}
+
+body[data-theme="light"] .settings-action.danger {
+  background: rgba(254, 226, 226, 0.8);
+  color: #b91c1c;
+  border-color: rgba(248, 113, 113, 0.45);
+}
