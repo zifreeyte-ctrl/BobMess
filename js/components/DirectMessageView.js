@@ -101,16 +101,21 @@ export class DirectMessageView extends Component {
             }
           </div>
 
-          <form class="chat-search-form" id="dmSearchForm">
-            <input
-              id="dmSearchInput"
-              type="text"
-              placeholder="Поиск..."
-              ${this.friend ? "" : "disabled"}
-            />
+          <div class="dm-header-tools">
+            <form class="chat-search-form dm-search-form" id="dmSearchForm">
+              <input
+                id="dmSearchInput"
+                type="text"
+                placeholder="Поиск..."
+                ${this.friend ? "" : "disabled"}
+              />
+
+              <button type="submit" ${this.friend ? "" : "disabled"}>🔎</button>
+              <button type="button" id="dmClearSearchButton">×</button>
+            </form>
 
             <button 
-              class="members-toggle-button" 
+              class="dm-pinned-button" 
               id="dmPinnedMessagesButton" 
               type="button"
               title="Закреплённые сообщения"
@@ -118,10 +123,7 @@ export class DirectMessageView extends Component {
             >
               📌
             </button>
-
-            <button type="submit" ${this.friend ? "" : "disabled"}>🔎</button>
-            <button type="button" id="dmClearSearchButton">×</button>
-          </form>
+          </div>
         </header>
 
         <div class="message-list dm-message-list" id="dmMessageList">

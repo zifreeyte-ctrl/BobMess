@@ -397,10 +397,14 @@ const canSendMessages = this.roleService.hasPermission(
     this.element.querySelector("#channelListSlot").replaceWith(this.channelList.render());
     this.element.querySelector("#messageListSlot").replaceWith(this.messageListComponent.render());
 
-    if (this.isMembersSidebarOpen || this.isMobileMembersOpen) {
-      this.element
-        .querySelector("#membersSidebarSlot")
-        .replaceWith(this.membersSidebar.render());
+    const membersSidebarSlot = this.element.querySelector("#membersSidebarSlot");
+
+    if (
+      membersSidebarSlot &&
+      (this.isMembersSidebarOpen || this.isMobileMembersOpen)
+    ) {
+      membersSidebarSlot.innerHTML = "";
+      membersSidebarSlot.append(this.membersSidebar.render());
     }
 
     return this.element;

@@ -1965,3 +1965,106 @@ body[data-theme="light"] .attachment-button {
     min-height: 30px;
   }
 }
+/* ===== Final DM pinned button fix ===== */
+
+.dm-header-tools {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+
+  flex: 1;
+}
+
+.dm-search-form {
+  max-width: 390px;
+}
+
+.dm-pinned-button {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+
+  background: var(--color-bg-card);
+  color: var(--color-accent-light);
+
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.dm-pinned-button:hover {
+  border-color: rgba(94, 234, 212, 0.45);
+  background: rgba(45, 212, 191, 0.12);
+}
+
+.dm-pinned-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 950px) {
+  .dm-header-tools {
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 7px;
+  }
+
+  .dm-search-form {
+    max-width: none;
+    grid-template-columns: minmax(0, 1fr) 42px 42px;
+  }
+
+  .dm-pinned-button {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .dm-header-tools {
+    grid-template-columns: minmax(0, 1fr) 40px;
+    gap: 6px;
+  }
+
+  .dm-search-form {
+    grid-template-columns: minmax(0, 1fr) 40px 40px;
+  }
+
+  .dm-pinned-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 420px) {
+  .dm-header-tools {
+    grid-template-columns: minmax(0, 1fr) 38px;
+  }
+
+  .dm-search-form {
+    grid-template-columns: minmax(0, 1fr) 38px 38px;
+  }
+
+  .dm-pinned-button {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+
+    border-radius: 15px;
+  }
+}

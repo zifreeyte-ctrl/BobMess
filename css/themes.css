@@ -43,3 +43,99 @@ body[data-theme="light"] {
 
   --shadow-main: 0 20px 60px rgba(13, 148, 136, 0.13);
 }
+/* ===== Full light theme override ===== */
+
+body[data-theme="light"] {
+  background: var(--color-bg-main);
+  color: var(--color-text);
+}
+
+body[data-theme="light"] .server-bar,
+body[data-theme="light"] .channel-sidebar,
+body[data-theme="light"] .dm-sidebar,
+body[data-theme="light"] .members-sidebar,
+body[data-theme="light"] .mobile-sidebar-panel .channel-sidebar,
+body[data-theme="light"] .mobile-sidebar-panel .dm-sidebar,
+body[data-theme="light"] .members-sidebar-shell > .members-sidebar {
+  background:
+    radial-gradient(circle at top, rgba(45, 212, 191, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(224, 242, 241, 0.96));
+
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .chat-panel {
+  background:
+    linear-gradient(180deg, rgba(240, 253, 250, 0.9), rgba(255, 255, 255, 0.96));
+
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .chat-header,
+body[data-theme="light"] .message-form,
+body[data-theme="light"] .members-header,
+body[data-theme="light"] .server-header,
+body[data-theme="light"] .dm-sidebar-header,
+body[data-theme="light"] .user-panel {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .message-list,
+body[data-theme="light"] .dm-message-list {
+  background: rgba(240, 253, 250, 0.4);
+}
+
+body[data-theme="light"] .message-body,
+body[data-theme="light"] .dm-message-body,
+body[data-theme="light"] .empty-chat,
+body[data-theme="light"] .empty-state,
+body[data-theme="light"] .friend-item,
+body[data-theme="light"] .friend-request-card,
+body[data-theme="light"] .member-sidebar-item,
+body[data-theme="light"] .channel-row {
+  background: rgba(255, 255, 255, 0.86);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+body[data-theme="light"] .channel-row.active,
+body[data-theme="light"] .friend-item.active,
+body[data-theme="light"] .member-sidebar-item.current {
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(13, 148, 136, 0.1);
+}
+
+body[data-theme="light"] .message-form input,
+body[data-theme="light"] .chat-search-form input,
+body[data-theme="light"] .friend-search-box input {
+  background: #ffffff;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .message-form input::placeholder,
+body[data-theme="light"] .chat-search-form input::placeholder,
+body[data-theme="light"] .friend-search-box input::placeholder {
+  color: #789995;
+}
+
+body[data-theme="light"] .mobile-panel-toggle,
+body[data-theme="light"] .members-toggle-button,
+body[data-theme="light"] .dm-pinned-button,
+body[data-theme="light"] .attachment-button,
+body[data-theme="light"] .chat-search-form button,
+body[data-theme="light"] .icon-button,
+body[data-theme="light"] .small-action-button,
+body[data-theme="light"] .dm-header-action {
+  background: #ffffff;
+  color: var(--color-accent-dark);
+  border-color: var(--color-border);
+}
+
+body[data-theme="light"] .mobile-sidebar-backdrop,
+body[data-theme="light"] .mobile-members-backdrop {
+  background: rgba(15, 23, 42, 0.28);
+}
