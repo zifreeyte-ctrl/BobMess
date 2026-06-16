@@ -4,6 +4,7 @@ import { ChannelList } from "./ChannelList.js";
 import { MessageList } from "./MessageList.js";
 import { Modal } from "./Modal.js";
 import { Toast } from "./Toast.js";
+import { createDefaultDatabase } from "../core/BackendSchema.js";
 import { ProfileModal } from "./ProfileModal.js";
 import { FriendList } from "./FriendList.js";
 import { DirectMessageView } from "./DirectMessageView.js";
@@ -2043,24 +2044,7 @@ clearDirectMessageSearch() {
   }
 
   resetApplicationData() {
-  this.storage.save({
-    users: [],
-    currentUserId: null,
-    servers: [],
-    messages: [],
-    directMessages: [],
-    friendships: [],
-    friendRequests: [],
-    blockedUsers: [],
-    notifications: [],
-    readState: {
-      channels: {},
-      dialogs: {}
-    },
-    settings: {
-      theme: "dark"
-    }
-  });
+  this.storage.save(createDefaultDatabase());
 
   this.currentServerId = null;
   this.currentChannelId = null;

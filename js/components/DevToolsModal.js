@@ -7,6 +7,25 @@ export class DevToolsModal {
     this.onReset = onReset;
   }
 
+  renderBackendMap() {
+    const backendMap = this.storage.getBackendMap();
+
+    return Object.entries(backendMap)
+      .map(([collectionName, config]) => {
+        return `
+          <div class="backend-map-row">
+            <div>
+              <strong>${collectionName}</strong>
+              <span>${config.description}</span>
+            </div>
+
+            <code>${config.endpoint}</code>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
   open() {
     const modal = new Modal({
       title: "Инструменты разработчика",
@@ -20,13 +39,36 @@ export class DevToolsModal {
             </p>
           </div>
 
-          <button class="settings-action" id="exportDatabaseButton">
-            Экспортировать базу
-          </button>
+          <div class="devtools-button-grid">
+            <button class="settings-action" id="exportDatabaseButton">
+              Экспортировать backend snapshot
+            </button>
+
+            <button class="settings-action" id="copyBackendPlanButton">
+              Скопировать backend-план
+            </button>
+          </div>
+
+          <div class="backend-ready-box">
+            <strong>Подготовка под backend</strong>
+            <p>
+              Проект всё ещё работает без backend, но структура базы теперь описана как набор коллекций.
+              Позже можно заменить только <code>Storage</code> на REST/Firebase/Supabase-адаптер,
+              не переписывая весь интерфейс.
+            </p>
+          </div>
+
+          <div class="backend-map">
+            ${this.renderBackendMap()}
+          </div>
 
           <div class="form-group">
             <label>Импорт базы JSON</label>
-            <textarea id="importDatabaseInput" class="devtools-textarea" placeholder="Вставь JSON базы сюда"></textarea>
+            <textarea
+              id="importDatabaseInput"
+              class="devtools-textarea"
+              placeholder="Вставь JSON базы или backend snapshot сюда"
+            ></textarea>
           </div>
 
           <button class="settings-action" id="importDatabaseButton">
@@ -52,10 +94,24 @@ export class DevToolsModal {
 
         try {
           await navigator.clipboard.writeText(json);
-          Toast.show("База скопирована в буфер обмена.");
+          Toast.show("Backend snapshot скопирован в буфер обмена.");
         } catch (error) {
           console.log(json);
-          Toast.show("База выведена в Console.");
+          Toast.show("Backend snapshot выведен в Console.");
+        }
+      });
+
+    modal.element
+      .querySelector("#copyBackendPlanButton")
+      .addEventListener("click", async () => {
+        const json = JSON.stringify(this.storage.getBackendPlan(), null, 2);
+
+        try {
+          await navigator.clipboard.writeText(json);
+          Toast.show("Backend-план скопирован.");
+        } catch (error) {
+          console.log(json);
+          Toast.show("Backend-план выведен в Console.");
         }
       });
 

@@ -1,0 +1,22 @@
+{
+  "name": "BobMess",
+  "short_name": "BobMess",
+  "description": "BobMess — современный мессенджер для общения, серверов, каналов и личных сообщений.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#020617",
+  "theme_color": "#0f766e",
+  "categories": ["social", "communication", "productivity"],
+  "lang": "ru",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "./assets/icons/bob-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import { Router } from "./Router.js";
 import { Storage } from "./Storage.js";
 import { EventBus } from "./EventBus.js";
+import { createDefaultDatabase } from "./BackendSchema.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -13,6 +14,7 @@ import { ThemeService } from "../services/ThemeService.js";
 
 import { AuthView } from "../components/AuthView.js";
 import { ChatView } from "../components/ChatView.js";
+import { ErrorView } from "../components/ErrorView.js";
 import { NotificationService } from "../services/NotificationService.js";
 import { SearchService } from "../services/SearchService.js";
 import { RoleService } from "../services/RoleService.js";
@@ -61,24 +63,8 @@ export class App {
   }
 
   start() {
-    this.storage.initialize({
-        users: [],
-        currentUserId: null,
-        servers: [],
-        messages: [],
-        directMessages: [],
-        friendships: [],
-        friendRequests: [],
-        blockedUsers: [],
-        notifications: [], 
-        readState: {
-            channels: {},
-            dialogs: {}
-        },
-        settings: {
-            theme: "dark"
-        }
-    });
+  try {
+    this.storage.initialize(createDefaultDatabase());
 
     this.runMigrations();
     this.roleService.migrateServers();
@@ -90,12 +76,33 @@ export class App {
     } else {
       this.showAuth();
     }
+  } catch (error) {
+    console.error("BobMess start error:", error);
+    this.showError(error);
   }
+}
 
   runMigrations() {
   this.storage.update((database) => {
     if (!Array.isArray(database.users)) {
       database.users = [];
+    }
+        if (!database.meta) {
+      database.meta = {};
+    }
+
+    database.meta.appName = "BobMess";
+    database.meta.schemaVersion = 2;
+    database.meta.storageMode = "localStorage";
+    database.meta.backendReady = true;
+    database.meta.updatedAt = new Date().toISOString();
+
+    if (!Array.isArray(database.blockedUsers)) {
+      database.blockedUsers = [];
+    }
+
+    if (!Array.isArray(database.notifications)) {
+      database.notifications = [];
     }
 
     if (!Array.isArray(database.servers)) {
@@ -431,10 +438,28 @@ database.notifications.forEach((notification) => {
     });
   }
 
-  showAuth() {
-    this.router.render(this.authView);
-  }
+  showError(error) {
+  const errorView = new ErrorView({
+    error,
+    onReload: () => {
+      window.location.reload();
+    },
+    onReset: () => {
+      const confirmed = confirm(
+        "Точно сбросить все данные BobMess в этом браузере?"
+      );
 
+      if (!confirmed) {
+        return;
+      }
+
+      this.storage.clear();
+      window.location.reload();
+    }
+  });
+
+  this.router.render(errorView);
+}
   showChat() {
     this.serverService.createDefaultDataIfNeeded();
     this.router.render(this.chatView);

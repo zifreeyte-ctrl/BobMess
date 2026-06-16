@@ -97,3 +97,192 @@ button {
     scrollbar-width: thin;
   }
 }
+/* ===== Error page ===== */
+
+.error-page {
+  width: 100%;
+  min-height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px;
+
+  background:
+    radial-gradient(circle at top left, rgba(94, 234, 212, 0.18), transparent 34%),
+    var(--color-bg-main);
+}
+
+.error-card {
+  width: min(520px, 100%);
+
+  display: grid;
+  gap: 16px;
+
+  padding: 28px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+
+  background:
+    linear-gradient(180deg, rgba(94, 234, 212, 0.06), transparent 70%),
+    var(--color-bg-card);
+
+  box-shadow: var(--shadow-main);
+  text-align: center;
+}
+
+.error-icon {
+  width: 72px;
+  height: 72px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto;
+
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  border-radius: 24px;
+
+  background: rgba(251, 191, 36, 0.12);
+
+  font-size: 34px;
+}
+
+.error-card h1 {
+  color: var(--color-text);
+  font-size: 28px;
+}
+
+.error-card p {
+  color: var(--color-muted);
+  line-height: 1.55;
+}
+
+.error-message {
+  padding: 12px 14px;
+
+  border: 1px solid rgba(251, 113, 133, 0.28);
+  border-radius: 16px;
+
+  background: rgba(127, 29, 29, 0.16);
+  color: #fecdd3;
+
+  font-family: monospace;
+  font-size: 13px;
+
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.error-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.primary-button,
+.danger-button {
+  min-height: 44px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: var(--color-accent);
+  color: #042f2e;
+}
+
+.danger-button {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fecdd3;
+}
+
+.error-note {
+  color: var(--color-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 560px) {
+  .error-card {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .error-card h1 {
+    font-size: 24px;
+  }
+
+  .error-actions {
+    grid-template-columns: 1fr;
+  }
+}
+/* ===== PWA mobile safe area ===== */
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (display-mode: standalone) {
+  body {
+    background: var(--color-bg-main);
+  }
+
+  .bob-layout {
+    padding-top: max(8px, var(--safe-top));
+    padding-right: max(8px, var(--safe-right));
+    padding-bottom: max(8px, var(--safe-bottom));
+    padding-left: max(8px, var(--safe-left));
+  }
+
+  .modal-backdrop,
+  .image-viewer-backdrop {
+    padding-top: max(12px, var(--safe-top));
+    padding-right: max(12px, var(--safe-right));
+    padding-bottom: max(12px, var(--safe-bottom));
+    padding-left: max(12px, var(--safe-left));
+  }
+}
+
+@media (max-width: 950px) and (display-mode: standalone) {
+  .server-bar {
+    padding-top: calc(72px + var(--safe-top));
+  }
+
+  .mobile-panel-toggle {
+    top: calc(20px + var(--safe-top));
+  }
+
+  .message-form {
+    padding-bottom: max(10px, var(--safe-bottom));
+  }
+}
+
+@media (max-width: 640px) and (display-mode: standalone) {
+  .server-bar {
+    padding-top: calc(68px + var(--safe-top));
+  }
+
+  .mobile-panel-toggle {
+    top: calc(18px + var(--safe-top));
+  }
+}
+
+@media (max-width: 420px) and (display-mode: standalone) {
+  .server-bar {
+    padding-top: calc(64px + var(--safe-top));
+  }
+
+  .mobile-panel-toggle {
+    top: calc(17px + var(--safe-top));
+  }
+}
