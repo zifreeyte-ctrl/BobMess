@@ -1,22 +1,5 @@
 import { App } from "./core/App.js";
-
-function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) {
-    return;
-  }
-
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("./sw.js")
-      .then((registration) => {
-        registration.update();
-        console.log("BobMess service worker registered.");
-      })
-      .catch((error) => {
-        console.warn("BobMess service worker registration failed:", error);
-      });
-  });
-}
+import { PwaManager } from "./core/PwaManager.js";
 
 window.addEventListener("error", (event) => {
   console.error("Global BobMess error:", event.error);
@@ -28,7 +11,10 @@ window.addEventListener("unhandledrejection", (event) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   const app = new App("#app");
+  const pwaManager = new PwaManager({
+    serviceWorkerPath: "./sw.js"
+  });
 
   app.start();
-  registerServiceWorker();
+  pwaManager.init();
 });

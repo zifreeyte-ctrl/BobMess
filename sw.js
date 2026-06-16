@@ -1,4 +1,4 @@
-const BOB_CACHE_VERSION = "bobmess-pwa-v1";
+const BOB_CACHE_VERSION = "bobmess-pwa-v2";
 
 const APP_SHELL = [
   "./",
@@ -39,6 +39,7 @@ const APP_SHELL = [
   "./js/core/App.js",
   "./js/core/BackendSchema.js",
   "./js/core/EventBus.js",
+  "./js/core/PwaManager.js",
   "./js/core/Router.js",
   "./js/core/Storage.js",
 
@@ -64,10 +65,9 @@ const APP_SHELL = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(BOB_CACHE_VERSION)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
+    caches.open(BOB_CACHE_VERSION).then((cache) => {
+      return cache.addAll(APP_SHELL);
+    })
   );
 });
 
@@ -86,6 +86,12 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
@@ -101,7 +107,17 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("./index.html"))
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+
+          caches.open(BOB_CACHE_VERSION).then((cache) => {
+            cache.put("./index.html", responseClone);
+          });
+
+          return response;
+        })
+        .catch(() => caches.match("./index.html"))
     );
 
     return;
@@ -109,7 +125,7 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
+      const networkRequest = fetch(request)
         .then((networkResponse) => {
           if (!networkResponse || networkResponse.status !== 200) {
             return networkResponse;
@@ -125,7 +141,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => cachedResponse);
 
-      return cachedResponse || fetchPromise;
+      return cachedResponse || networkRequest;
     })
   );
 });
