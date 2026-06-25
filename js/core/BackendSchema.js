@@ -1,5 +1,8 @@
 export const DATABASE_VERSION = 2;
 
+export const BOB_STORAGE_MODES = ["localStorage", "backend"];
+export const DEFAULT_API_BASE_URL = "http://localhost:4000/api";
+
 export const BOB_COLLECTIONS = [
   "users",
   "servers",
@@ -67,6 +70,7 @@ export function createDefaultDatabase() {
       appName: "BobMess",
       schemaVersion: DATABASE_VERSION,
       storageMode: "localStorage",
+      apiBaseUrl: DEFAULT_API_BASE_URL,
       backendReady: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -98,6 +102,10 @@ export function createDefaultDatabase() {
 
 export function normalizeDatabase(database = {}) {
   const defaultDatabase = createDefaultDatabase();
+  const sourceMeta = database.meta || {};
+  const storageMode = BOB_STORAGE_MODES.includes(sourceMeta.storageMode)
+    ? sourceMeta.storageMode
+    : defaultDatabase.meta.storageMode;
 
   const normalizedDatabase = {
     ...defaultDatabase,
@@ -106,9 +114,10 @@ export function normalizeDatabase(database = {}) {
 
   normalizedDatabase.meta = {
     ...defaultDatabase.meta,
-    ...(database.meta || {}),
+    ...sourceMeta,
     schemaVersion: DATABASE_VERSION,
-    storageMode: "localStorage",
+    storageMode,
+    apiBaseUrl: sourceMeta.apiBaseUrl || defaultDatabase.meta.apiBaseUrl,
     backendReady: true,
     updatedAt: new Date().toISOString()
   };
@@ -160,7 +169,8 @@ export function createBackendSnapshot(database) {
     appName: "BobMess",
     schemaVersion: DATABASE_VERSION,
     exportedAt: new Date().toISOString(),
-    storageMode: "localStorage",
+    storageMode: normalizedDatabase.meta.storageMode,
+    apiBaseUrl: normalizedDatabase.meta.apiBaseUrl,
     backendReady: true,
     apiMap: BOB_BACKEND_MAP,
     collections,

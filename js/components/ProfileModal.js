@@ -218,7 +218,10 @@ export class ProfileModal {
             <div class="settings-section-header">
               <div>
                 <h3>Смена пароля</h3>
-                <p>Пароль хранится локально в учебном проекте.</p>
+                <p>
+                  В LocalStorage-режиме пароль меняется локально. Для backend-режима смена пароля
+                  будет добавлена отдельным безопасным endpoint.
+                </p>
               </div>
             </div>
 
@@ -263,7 +266,7 @@ export class ProfileModal {
           </div>
         </div>
       `,
-      onConfirm: (modalElement) => {
+      onConfirm: async (modalElement) => {
         const username = modalElement.querySelector("#profileUsernameInput").value;
         const avatarText = modalElement.querySelector("#profileAvatarInput").value;
         const status = modalElement.querySelector("#profileStatusInput").value;
@@ -276,7 +279,7 @@ export class ProfileModal {
           "?";
 
         try {
-          this.userService.updateProfile(this.user.id, {
+          await this.userService.updateProfile(this.user.id, {
             username,
             avatar,
             status,

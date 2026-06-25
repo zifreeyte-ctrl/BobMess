@@ -30,8 +30,10 @@ export class ChatView extends Component {
     serverService,
     chatService,
     themeService,
+    dataMode,
+    apiClient,
     eventBus
-}) {
+    }) {
     super();
 
     this.authService = authService;
@@ -47,6 +49,8 @@ export class ChatView extends Component {
     this.serverService = serverService;
     this.chatService = chatService;
     this.themeService = themeService;
+    this.dataMode = dataMode;
+    this.apiClient = apiClient;
     this.eventBus = eventBus;
 
     this.currentServerId = null;
@@ -911,6 +915,8 @@ openCreateServerModal() {
   openDevToolsModal() {
   const modal = new DevToolsModal({
     storage: this.storage,
+    dataMode: this.dataMode,
+    apiClient: this.apiClient,
     onReset: () => {
       this.logout();
     }

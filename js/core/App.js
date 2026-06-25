@@ -2,6 +2,8 @@ import { Router } from "./Router.js";
 import { Storage } from "./Storage.js";
 import { EventBus } from "./EventBus.js";
 import { createDefaultDatabase } from "./BackendSchema.js";
+import { ApiClient } from "./ApiClient.js";
+import { DataMode } from "./DataMode.js";
 
 import { AuthService } from "../services/AuthService.js";
 import { UserService } from "../services/UserService.js";
@@ -26,8 +28,23 @@ export class App {
     this.storage = new Storage("bob_database");
     this.eventBus = new EventBus();
 
-    this.authService = new AuthService(this.storage);
-    this.userService = new UserService(this.storage);
+    this.dataMode = new DataMode({ storage: this.storage });
+    this.apiClient = new ApiClient({
+      baseUrl: this.dataMode.getApiBaseUrl(),
+      getToken: () => this.dataMode.getToken(),
+      onUnauthorized: () => {
+        this.dataMode.clearToken();
+      }
+    });
+
+    this.authService = new AuthService(this.storage, {
+      dataMode: this.dataMode,
+      apiClient: this.apiClient
+    });
+    this.userService = new UserService(this.storage, {
+      dataMode: this.dataMode,
+      apiClient: this.apiClient
+    });
     this.friendService = new FriendService(this.storage);
     this.directMessageService = new DirectMessageService(this.storage, this.friendService);
     this.notificationService = new NotificationService(this.storage);
@@ -42,6 +59,8 @@ export class App {
 
     this.authView = new AuthView({
       authService: this.authService,
+      dataMode: this.dataMode,
+      apiClient: this.apiClient,
       eventBus: this.eventBus
     });
 
@@ -58,20 +77,26 @@ export class App {
       serverService: this.serverService,
       chatService: this.chatService,
       themeService: this.themeService,
+      dataMode: this.dataMode,
+      apiClient: this.apiClient,
       eventBus: this.eventBus
     });
   }
 
-  start() {
+  async start() {
   try {
     this.storage.initialize(createDefaultDatabase());
 
     this.runMigrations();
     this.roleService.migrateServers();
     this.themeService.applySavedTheme();
+    this.dataMode.syncStorageMeta();
+    this.apiClient.setBaseUrl(this.dataMode.getApiBaseUrl());
     this.registerEvents();
 
-    if (this.authService.isAuthenticated()) {
+    const canOpenChat = await this.canOpenInitialChat();
+
+    if (canOpenChat) {
       this.showChat();
     } else {
       this.showAuth();
@@ -81,6 +106,21 @@ export class App {
     this.showError(error);
   }
 }
+
+async canOpenInitialChat() {
+  if (!this.dataMode.isBackendMode()) {
+    return this.authService.isAuthenticated();
+  }
+
+  if (!this.dataMode.getToken()) {
+    this.authService.clearCurrentSession("missing_backend_token");
+    return false;
+  }
+
+  this.apiClient.setBaseUrl(this.dataMode.getApiBaseUrl());
+
+  return this.authService.restoreBackendSession();
+} 
 
   runMigrations() {
   this.storage.update((database) => {
@@ -93,7 +133,14 @@ export class App {
 
     database.meta.appName = "BobMess";
     database.meta.schemaVersion = 2;
-    database.meta.storageMode = "localStorage";
+    database.meta.storageMode =
+      this.dataMode?.getMode?.() ||
+      database.meta.storageMode ||
+      "localStorage";
+    database.meta.apiBaseUrl =
+      this.dataMode?.getApiBaseUrl?.() ||
+      database.meta.apiBaseUrl ||
+      "http://localhost:4000/api";
     database.meta.backendReady = true;
     database.meta.updatedAt = new Date().toISOString();
 
@@ -437,6 +484,10 @@ database.notifications.forEach((notification) => {
       this.showAuth();
     });
   }
+
+  showAuth() {
+  this.router.render(this.authView);
+}
 
   showError(error) {
   const errorView = new ErrorView({
